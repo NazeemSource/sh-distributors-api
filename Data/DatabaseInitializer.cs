@@ -8,7 +8,8 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
 {
     public async Task InitializeAsync()
     {
-        await db.Database.EnsureCreatedAsync();
+        if (db.Database.IsRelational()) await db.Database.MigrateAsync();
+        else await db.Database.EnsureCreatedAsync();
         if (await db.Users.AnyAsync()) return;
 
         if (!environment.IsDevelopment())
@@ -21,18 +22,21 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
             return;
         }
 
+        var company1 = new Company { Code = "COMPANY-01", Name = "Company - 01" };
+        var company2 = new Company { Code = "COMPANY-02", Name = "Company - 02" };
+        db.Companies.AddRange(company1, company2);
         var users = new[]
         {
             NewUser("Administrator - 01", "admin", "Admin", null, "All areas", "1234"),
-            NewUser("Rep - 01", "rep01", "Rep", "c1", "Area - 01", "1234"),
-            NewUser("Rep - 02", "rep02", "Rep", "c1", "Area - 02", "1234"),
-            NewUser("Rep - 03", "rep03", "Rep", "c2", "Area - 03", "1234")
+            NewUser("Rep - 01", "rep01", "Rep", company1.Id, "Area - 01", "1234"),
+            NewUser("Rep - 02", "rep02", "Rep", company1.Id, "Area - 02", "1234"),
+            NewUser("Rep - 03", "rep03", "Rep", company2.Id, "Area - 03", "1234")
         };
         await db.Users.AddRangeAsync(users);
         await db.SaveChangesAsync();
     }
 
-    private User NewUser(string name, string username, string role, string? companyId, string territory, string password)
+    private User NewUser(string name, string username, string role, Guid? companyId, string territory, string password)
     {
         var user = new User { Name = name, Username = username, PasswordHash = "", Role = role, CompanyId = companyId, Territory = territory };
         user.PasswordHash = hasher.HashPassword(user, password);

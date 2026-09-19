@@ -15,6 +15,7 @@ var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationExcep
 if (Encoding.UTF8.GetByteCount(jwtKey) < 32) throw new InvalidOperationException("Jwt:Key must be at least 32 bytes.");
 
 builder.Services.AddControllers();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "Keys")))
     .SetApplicationName("Distributor.Api");
@@ -22,6 +23,9 @@ builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<DatabaseInitializer>();
+builder.Services.AddScoped<InventoryService>();
+builder.Services.AddScoped<PaymentService>();
+builder.Services.AddScoped<OperationsService>();
 builder.Services.AddSingleton<TokenService>();
 if (builder.Configuration.GetValue<bool>("Database:UseInMemory"))
     builder.Services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase("DistributorApi"));

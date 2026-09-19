@@ -1,19 +1,91 @@
-name: Validate API
+name: API CI/CD
 
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shdistrapi-production
+  cancel-in-progress: false
 
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-disposable-password
+          MYSQL_DATABASE: distributor_api
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost --silent"
+          --health-interval=5s --health-timeout=5s --health-retries=30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
       - run: dotnet restore
+      - run: dotnet restore tests/API.Tests/API.Tests.csproj
       - run: dotnet build --configuration Release --no-restore
+      - run: dotnet test tests/API.Tests/API.Tests.csproj --configuration Release --no-restore
+      - name: Verify MySQL migrations and startup
+        env:
+          ASPNETCORE_ENVIRONMENT: Production
+          ASPNETCORE_URLS: http://127.0.0.1:5080
+          ConnectionStrings__Default: Server=127.0.0.1;Port=3306;Database=distributor_api;User=root;Password=ci-disposable-password;SslMode=Disabled;AllowPublicKeyRetrieval=True
+          Jwt__Key: ci-only-random-key-with-at-least-32-characters
+          Seed__Enabled: 'false'
+        run: |
+          dotnet run --no-build --configuration Release > /tmp/shdistrapi.log 2>&1 &
+          pid=$!
+          for i in $(seq 1 45); do curl -fsS http://127.0.0.1:5080/health && ready=1 && break; sleep 2; done
+          test "${ready:-0}" = 1 || { cat /tmp/shdistrapi.log; exit 1; }
+          kill "$pid"
       - run: dotnet list package --vulnerable --include-transitive
+      - name: Publish Linux API
+        if: github.event_name != 'pull_request'
+        run: dotnet publish -c Release -r linux-x64 --self-contained true -o release/api
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
+        with:
+          name: shdistrapi
+          path: release/api
+          retention-days: 7
 
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: verify
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://shdistrapi.umigs.com/health
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: shdistrapi, path: release/api }
+      - uses: appleboy/scp-action@v1
+        with:
+          host: 198.54.121.31
+          username: cwebsite
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: release,deploy
+          target: /home/cwebsite/apps/shdistrapi-builds/${{ github.sha }}
+          overwrite: true
+          command_timeout: 15m
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: 198.54.121.31
+          username: cwebsite
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 15m
+          script: |
+            set -eu
+            cd /home/cwebsite/apps/shdistrapi-builds/${{ github.sha }}
+            bash deploy/install.sh

@@ -18,7 +18,7 @@ public sealed class TokenService(IConfiguration configuration)
             new(ClaimTypes.Role, user.Role),
             new("display_name", user.Name)
         };
-        if (user.CompanyId is not null) claims.Add(new("company_id", user.CompanyId));
+        if (user.CompanyId is not null) claims.Add(new("company_id", user.CompanyId.Value.ToString()));
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
         var token = new JwtSecurityToken(
             issuer: configuration["Jwt:Issuer"], audience: configuration["Jwt:Audience"], claims: claims,
@@ -27,8 +27,7 @@ public sealed class TokenService(IConfiguration configuration)
     }
 }
 
-public sealed record UserView(Guid Id, string? CompanyId, string Name, string Username, string Role, string Territory, bool Active, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt)
+public sealed record UserView(Guid Id, Guid? CompanyId, string Name, string Username, string Role, string Territory, bool Active, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt)
 {
     public static UserView From(User user) => new(user.Id, user.CompanyId, user.Name, user.Username, user.Role, user.Territory, user.Active, user.CreatedAt, user.UpdatedAt);
 }
-

@@ -4,3 +4,4 @@ obj/
 *.user
 appsettings.Production.json
 App_Data/
+release/
