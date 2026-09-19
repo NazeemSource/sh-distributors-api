@@ -1,0 +1,14 @@
+@API_HostAddress = http://localhost:5218
+
+GET {{API_HostAddress}}/health
+Accept: application/json
+
+###
+
+POST {{API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "1234"
+}

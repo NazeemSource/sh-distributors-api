@@ -1,0 +1,21 @@
+CREATE DATABASE IF NOT EXISTS distributor_api
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_0900_ai_ci;
+
+USE distributor_api;
+
+CREATE TABLE IF NOT EXISTS Users (
+  Id CHAR(36) NOT NULL,
+  CompanyId VARCHAR(50) NULL,
+  Name VARCHAR(120) NOT NULL,
+  Username VARCHAR(80) NOT NULL,
+  PasswordHash VARCHAR(500) NOT NULL,
+  Role VARCHAR(30) NOT NULL,
+  Territory VARCHAR(120) NOT NULL DEFAULT '',
+  Active TINYINT(1) NOT NULL DEFAULT 1,
+  CreatedAt DATETIME(6) NOT NULL,
+  UpdatedAt DATETIME(6) NOT NULL,
+  PRIMARY KEY (Id),
+  UNIQUE KEY UX_Users_Username (Username)
+) ENGINE=InnoDB;
+
