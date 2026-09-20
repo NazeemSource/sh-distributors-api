@@ -43,7 +43,7 @@ jobs:
           Jwt__Key: ci-only-random-key-with-at-least-32-characters
           Seed__Enabled: 'false'
         run: |
-          dotnet run --no-build --configuration Release > /tmp/shdistrapi.log 2>&1 &
+          dotnet run --no-build --no-launch-profile --configuration Release > /tmp/shdistrapi.log 2>&1 &
           pid=$!
           for i in $(seq 1 45); do curl -fsS http://127.0.0.1:5080/health && ready=1 && break; sleep 2; done
           test "${ready:-0}" = 1 || { cat /tmp/shdistrapi.log; exit 1; }
