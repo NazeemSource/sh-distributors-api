@@ -11,7 +11,7 @@ public sealed record ProductRequest(Guid CompanyId, string Sku, string Barcode, 
 public sealed record StockAdjustmentRequest(decimal Quantity, string Direction, string Notes);
 public sealed record StockInLineRequest(Guid ProductId, decimal Quantity, decimal UnitCost);
 public sealed record StockInRequest(Guid CompanyId, string StockInNumber, DateOnly StockInDate, string Notes, List<StockInLineRequest> Products);
-public sealed record PaymentRequest(DateOnly PaymentDate, decimal PaidAmount, string Method, string Reference);
+public sealed record PaymentRequest(DateOnly PaymentDate, decimal PaidAmount, string Method, string Reference, string? BankName = null, DateOnly? ChequeDate = null);
 public sealed record OrderLineRequest(Guid ProductId, decimal Quantity, decimal FreeIssueQuantity, decimal UnitPrice);
 public sealed record OrderRequest(Guid ShopId, Guid SalesRepId, string OrderNumber, DateOnly OrderDate, DateOnly DeliveryDate, string DeliveryAddress, string Notes, List<OrderLineRequest> Products);
 public sealed record ChequeRequest(Guid ShopId, Guid? OrderId, string ChequeNumber, string BankName, decimal Amount, DateOnly ChequeDate, string Status, int RemindBeforeDays, string Notes);

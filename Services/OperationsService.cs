@@ -83,8 +83,18 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         if (request.PaidAmount <= 0) throw new BusinessException("invalid_payment", "Payment amount must be greater than zero.");
         var order = await db.Orders.FindAsync(orderId) ?? throw new BusinessException("not_found", "Order was not found.", 404);
         if (request.PaidAmount > await payments.GetOrderBalance(orderId)) throw new BusinessException("invalid_payment", "Payment exceeds the order balance.");
+        var byCheque = string.Equals(request.Method, "Check", StringComparison.OrdinalIgnoreCase);
+        if (byCheque && (string.IsNullOrWhiteSpace(request.BankName) || string.IsNullOrWhiteSpace(request.Reference) || request.ChequeDate is null))
+            throw new BusinessException("invalid_cheque", "Bank, check number, and check date are required.");
+        if (byCheque && await db.Cheques.AnyAsync(x => x.ChequeNumber == request.Reference.Trim()))
+            throw new BusinessException("duplicate_cheque", "Check number already exists.", 409);
         await using var transaction = await BeginTransaction();
-        try { var payment = new OrderPayment { OrderId=orderId, PaymentDate=request.PaymentDate, PaidAmount=request.PaidAmount, Method=request.Method.Trim(), Reference=request.Reference.Trim() }; db.OrderPayments.Add(payment); await db.SaveChangesAsync(); await payments.RecalculateOrderPaymentStatus(order); await db.SaveChangesAsync(); if(transaction is not null)await transaction.CommitAsync(); return payment; }
+        try {
+            var payment = new OrderPayment { OrderId=orderId, PaymentDate=request.PaymentDate, PaidAmount=request.PaidAmount, Method=request.Method.Trim(), Reference=request.Reference.Trim() };
+            db.OrderPayments.Add(payment);
+            if (byCheque) db.Cheques.Add(new Cheque { ShopId=order.ShopId, OrderId=order.Id, ChequeNumber=request.Reference.Trim(), BankName=request.BankName!.Trim(), Amount=request.PaidAmount, ChequeDate=request.ChequeDate!.Value, Status="PENDING", RemindBeforeDays=3 });
+            await db.SaveChangesAsync(); await payments.RecalculateOrderPaymentStatus(order); await db.SaveChangesAsync(); if(transaction is not null)await transaction.CommitAsync(); return payment;
+        }
         catch { if(transaction is not null)await transaction.RollbackAsync(); throw; }
     }
 

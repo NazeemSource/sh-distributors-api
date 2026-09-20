@@ -30,6 +30,27 @@ public sealed class BusinessOperationsTests
         await operations.AddOrderPayment(order.Id, new PaymentRequest(new DateOnly(2026, 9, 19), 300, "BANK", "PAY-02"));
         Assert.Equal("PAID", order.PaymentStatus);
         Assert.Equal(0, await payments.GetShopOutstanding(shop.Id));
+        db.ChangeTracker.Clear();
+        var controller = new Distributor.Api.Controllers.OperationsController(db, operations, payments) {
+            ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext {
+                HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext {
+                    User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity([new(System.Security.Claims.ClaimTypes.Role, "Admin")], "test"))
+                }
+            }
+        };
+        var json=System.Text.Json.JsonSerializer.Serialize(await controller.Orders(null,null,null,null,null),new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+        using var response=System.Text.Json.JsonDocument.Parse(json);
+        Assert.Equal(2,response.RootElement[0].GetProperty("payments").GetArrayLength());
+        Assert.Equal(500,response.RootElement[0].GetProperty("payments").EnumerateArray().Sum(x=>x.GetProperty("paidAmount").GetDecimal()));
+
+        var checkOrder=await operations.CreateOrder(new OrderRequest(shop.Id,rep.Id,"ORD-CHECK",new DateOnly(2026,9,20),new DateOnly(2026,9,21),"","",[new(product.Id,2,0,50)]));
+        await Assert.ThrowsAsync<BusinessException>(()=>operations.AddOrderPayment(checkOrder.Id,new PaymentRequest(new DateOnly(2026,9,20),50,"Check","CHK-01")));
+        Assert.Equal(0,await payments.GetOrderPaidAmount(checkOrder.Id));
+        await operations.AddOrderPayment(checkOrder.Id,new PaymentRequest(new DateOnly(2026,9,20),50,"Check","CHK-01","Bank - 01",new DateOnly(2026,9,22)));
+        Assert.Equal(50,await payments.GetOrderPaidAmount(checkOrder.Id));
+        Assert.Single(await db.Cheques.Where(x=>x.OrderId==checkOrder.Id).ToListAsync());
+        await Assert.ThrowsAsync<BusinessException>(()=>operations.AddOrderPayment(checkOrder.Id,new PaymentRequest(new DateOnly(2026,9,20),10,"Check","CHK-01","Bank - 01",new DateOnly(2026,9,22))));
+        Assert.Equal(50,await payments.GetOrderPaidAmount(checkOrder.Id));
     }
 
     [Fact]
