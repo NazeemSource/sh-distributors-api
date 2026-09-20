@@ -16,7 +16,7 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
         {
             if (!configuration.GetValue<bool>("Seed:Enabled")) return;
             var password = configuration["Seed:AdminPassword"] ?? throw new InvalidOperationException("Seed:AdminPassword is required when production seeding is enabled.");
-            if (password.Length < 12) throw new InvalidOperationException("The initial production admin password must contain at least 12 characters.");
+            if (password.Length < 6) throw new InvalidOperationException("The initial production admin password must contain at least 6 characters.");
             db.Users.Add(NewUser(configuration["Seed:AdminName"] ?? "Administrator - 01", configuration["Seed:AdminUsername"] ?? "admin", "Admin", null, "All areas", password));
             await db.SaveChangesAsync();
             return;

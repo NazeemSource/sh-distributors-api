@@ -18,14 +18,15 @@ if (!is_dir($shared) && !mkdir($shared, 0700, true) && !is_dir($shared)) throw n
 $settingsPath = $shared.'/appsettings.Production.json';
 $existing = is_file($settingsPath) ? json_decode(file_get_contents($settingsPath), true, flags: JSON_THROW_ON_ERROR) : [];
 $jwtKey = $existing['Jwt']['Key'] ?? bin2hex(random_bytes(48));
-$seedPassword = $existing['Seed']['AdminPassword'] ?? bin2hex(random_bytes(12));
+$seedPassword = $existing['Seed']['AdminPassword'] ?? getenv('SHDISTR_ADMIN_PASSWORD');
+if (!is_string($seedPassword) || strlen($seedPassword) < 6) throw new RuntimeException('Production admin password is missing or too short.');
 $settings = [
   'ConnectionStrings'=>['Default'=>$connection],
   'Database'=>['UseInMemory'=>false],
   'Jwt'=>['Issuer'=>'Distributor.Api','Audience'=>'Distributor.Apps','Key'=>$jwtKey,'Hours'=>12],
   'Cors'=>['Origins'=>['https://dist.umigs.com','https://rep.umigs.com']],
   'Seed'=>['Enabled'=>true,'AdminUsername'=>'admin','AdminName'=>'Administrator - 01','AdminPassword'=>$seedPassword],
-  'AllowedHosts'=>'shdistrapi.umigs.com'
+  'AllowedHosts'=>'shdistrapi.umigs.com;127.0.0.1;localhost'
 ];
 file_put_contents($settingsPath, json_encode($settings, JSON_PRETTY_PRINT|JSON_THROW_ON_ERROR));
 chmod($settingsPath, 0600);

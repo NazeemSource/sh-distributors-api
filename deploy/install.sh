@@ -9,7 +9,7 @@ shared="$base/apps/shdistrapi-shared"
 public="$base/public_html/shdistrapi/public"
 mkdir -p "$shared" "$public"
 cp deploy/.htaccess "$public/.htaccess"
-php deploy/configure.php
+/usr/local/apps/php84/bin/php deploy/configure.php
 chmod +x "$release/API"
 ln -sfn "$shared/appsettings.Production.json" "$release/appsettings.Production.json"
 pidfile="$shared/api.pid"
