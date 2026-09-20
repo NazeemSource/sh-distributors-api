@@ -8,8 +8,10 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
 {
     public async Task InitializeAsync()
     {
-        if (db.Database.IsRelational()) await db.Database.MigrateAsync();
-        else await db.Database.EnsureCreatedAsync();
+        if (db.Database.IsRelational() && !configuration.GetValue<bool>("Database:UseEnsureCreated"))
+            await db.Database.MigrateAsync();
+        else
+            await db.Database.EnsureCreatedAsync();
         if (await db.Users.AnyAsync()) return;
 
         if (!environment.IsDevelopment())

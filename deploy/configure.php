@@ -22,7 +22,7 @@ $seedPassword = $existing['Seed']['AdminPassword'] ?? getenv('SHDISTR_ADMIN_PASS
 if (!is_string($seedPassword) || strlen($seedPassword) < 6) throw new RuntimeException('Production admin password is missing or too short.');
 $settings = [
   'ConnectionStrings'=>['Default'=>$connection],
-  'Database'=>['UseInMemory'=>false],
+  'Database'=>['UseInMemory'=>false,'UseEnsureCreated'=>true],
   'Jwt'=>['Issuer'=>'Distributor.Api','Audience'=>'Distributor.Apps','Key'=>$jwtKey,'Hours'=>12],
   'Cors'=>['Origins'=>['https://dist.umigs.com','https://rep.umigs.com']],
   'Seed'=>['Enabled'=>true,'AdminUsername'=>'admin','AdminName'=>'Administrator - 01','AdminPassword'=>$seedPassword],
