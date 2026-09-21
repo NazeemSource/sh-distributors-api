@@ -8,6 +8,7 @@ namespace Distributor.Api.Services;
 
 public sealed class TokenService(IConfiguration configuration)
 {
+    public static string SecurityVersion(User user) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(user.PasswordHash)));
     public object Create(User user)
     {
         var expires = DateTime.UtcNow.AddHours(configuration.GetValue("Jwt:Hours", 12));
@@ -16,7 +17,8 @@ public sealed class TokenService(IConfiguration configuration)
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.Username),
             new(ClaimTypes.Role, user.Role),
-            new("display_name", user.Name)
+            new("display_name", user.Name),
+            new("security_version", SecurityVersion(user))
         };
         if (user.CompanyId is not null) claims.Add(new("company_id", user.CompanyId.Value.ToString()));
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));

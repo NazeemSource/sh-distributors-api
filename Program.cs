@@ -45,6 +45,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         ValidIssuer = builder.Configuration["Jwt:Issuer"], ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), ClockSkew = TimeSpan.FromMinutes(1)
     };
+    options.Events = new JwtBearerEvents {
+        OnTokenValidated = async context => {
+            var id=context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if(!Guid.TryParse(id,out var userId)){context.Fail("Invalid account.");return;}
+            var db=context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+            var user=await db.Users.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==userId);
+            if(user is null || !user.Active || context.Principal?.FindFirst("security_version")?.Value!=TokenService.SecurityVersion(user)
+                || context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value!=user.Role
+                || context.Principal?.FindFirst("company_id")?.Value!=user.CompanyId?.ToString())context.Fail("Account access has changed. Sign in again.");
+        }
+    };
 });
 builder.Services.AddAuthorization();
 

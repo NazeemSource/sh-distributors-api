@@ -49,6 +49,17 @@ jobs:
           test "${ready:-0}" = 1 || { cat /tmp/shdistrapi.log; exit 1; }
           kill "$pid"
       - run: dotnet list package --vulnerable --include-transitive
+      - name: Verify rep and admin integration
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          Database__UseInMemory: 'true'
+          ASPNETCORE_URLS: http://127.0.0.1:5095
+        run: |
+          dotnet run --no-build --no-launch-profile --configuration Release > /tmp/rep-integration.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5095/health && break; sleep 1; done
+          node scripts/verify-rep-flow.mjs
       - name: Publish Linux API
         if: github.event_name != 'pull_request'
         run: dotnet publish -c Release -r linux-x64 --self-contained true -o release/api
