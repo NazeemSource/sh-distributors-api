@@ -112,6 +112,26 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         catch { if(transaction is not null)await transaction.RollbackAsync();throw; }
     }
 
+    public async Task DeleteOrder(Guid id)
+    {
+        var order = await db.Orders.Include(x => x.Products).Include(x => x.Payments).SingleOrDefaultAsync(x => x.Id == id)
+            ?? throw new BusinessException("not_found", "Order was not found.", 404);
+        var cheques = await db.Cheques.Where(x => x.OrderId == id).ToListAsync();
+        await using var transaction = await BeginTransaction();
+        try
+        {
+            inventory.ReverseOrderStock(order);
+            var now = DateTimeOffset.UtcNow;
+            order.IsDeleted = true; order.DeletedAt = now; order.UpdatedAt = now;
+            foreach (var line in order.Products) { line.IsDeleted = true; line.DeletedAt = now; line.UpdatedAt = now; }
+            foreach (var payment in order.Payments) { payment.IsDeleted = true; payment.DeletedAt = now; payment.UpdatedAt = now; }
+            foreach (var cheque in cheques) { cheque.IsDeleted = true; cheque.DeletedAt = now; cheque.UpdatedAt = now; }
+            await db.SaveChangesAsync();
+            if (transaction is not null) await transaction.CommitAsync();
+        }
+        catch { if (transaction is not null) await transaction.RollbackAsync(); throw; }
+    }
+
     public async Task<OrderPayment> AddOrderPayment(Guid orderId, PaymentRequest request)
     {
         if (request.PaidAmount <= 0) throw new BusinessException("invalid_payment", "Payment amount must be greater than zero.");

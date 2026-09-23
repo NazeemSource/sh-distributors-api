@@ -51,6 +51,10 @@ public sealed class BusinessOperationsTests
         Assert.Single(await db.Cheques.Where(x=>x.OrderId==checkOrder.Id).ToListAsync());
         await Assert.ThrowsAsync<BusinessException>(()=>operations.AddOrderPayment(checkOrder.Id,new PaymentRequest(new DateOnly(2026,9,20),10,"Check","CHK-01","Bank - 01",new DateOnly(2026,9,22))));
         Assert.Equal(50,await payments.GetOrderPaidAmount(checkOrder.Id));
+        await operations.DeleteOrder(checkOrder.Id);
+        Assert.Equal(88,await inventory.GetCurrentStock(product.Id));
+        Assert.Empty(await db.Orders.Where(x=>x.Id==checkOrder.Id).ToListAsync());
+        Assert.Empty(await db.Cheques.Where(x=>x.OrderId==checkOrder.Id).ToListAsync());
     }
 
     [Fact]
