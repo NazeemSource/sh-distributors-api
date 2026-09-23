@@ -31,6 +31,15 @@ public sealed class InventoryService(AppDbContext db)
         }
     }
 
+    public void ReverseOrderStock(Order order)
+    {
+        foreach (var line in order.Products)
+        {
+            db.InventoryTransactions.Add(Movement(line.ProductId, "ORDER_EDIT_REVERSAL", line.Quantity, 0, "ORDER", order.Id));
+            if (line.FreeIssueQuantity > 0) db.InventoryTransactions.Add(Movement(line.ProductId, "FREE_ISSUE_EDIT_REVERSAL", line.FreeIssueQuantity, 0, "ORDER", order.Id));
+        }
+    }
+
     public async Task<InventoryTransaction> CreateStockAdjustment(Guid productId, decimal quantity, string direction, string notes)
     {
         if (quantity <= 0) throw new BusinessException("invalid_quantity", "Quantity must be greater than zero.");
@@ -45,4 +54,3 @@ public sealed class InventoryService(AppDbContext db)
     private static InventoryTransaction Movement(Guid productId, string type, decimal quantityIn, decimal quantityOut, string referenceType, Guid? referenceId, string notes = "") =>
         new() { ProductId = productId, Type = type, QuantityIn = quantityIn, QuantityOut = quantityOut, ReferenceType = referenceType, ReferenceId = referenceId, Notes = notes };
 }
-

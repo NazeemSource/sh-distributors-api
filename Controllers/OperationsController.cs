@@ -23,6 +23,8 @@ public sealed class OperationsController(AppDbContext db,OperationsService opera
 
     [HttpPost("orders")]
     public async Task<IActionResult>CreateOrder(OrderRequest r){if(!User.IsAdmin()&&r.SalesRepId!=User.UserId())return Forbid();var x=await operations.CreateOrder(r);return Created($"/api/orders/{x.Id}",View(x));}
+    [HttpPut("orders/{id:guid}")]
+    public async Task<IActionResult>UpdateOrder(Guid id,OrderRequest r){if(!User.IsAdmin()){var userId=User.UserId();if(r.SalesRepId!=userId||!await db.Orders.AnyAsync(x=>x.Id==id&&x.SalesRepId==userId))return Forbid();}var x=await operations.UpdateOrder(id,r);return Ok(View(x));}
     [HttpGet("orders")]
     public async Task<object>Orders([FromQuery]Guid? shopId,[FromQuery]Guid? salesRepId,[FromQuery]DateOnly? from,[FromQuery]DateOnly? to,[FromQuery]string? paymentStatus){var q=db.Orders.AsNoTracking().Include(x=>x.Payments).Include(x=>x.Products).AsQueryable();if(!User.IsAdmin())q=q.Where(x=>x.SalesRepId==User.UserId());else if(salesRepId.HasValue)q=q.Where(x=>x.SalesRepId==salesRepId);if(shopId.HasValue)q=q.Where(x=>x.ShopId==shopId);if(from.HasValue)q=q.Where(x=>x.OrderDate>=from);if(to.HasValue)q=q.Where(x=>x.OrderDate<=to);if(!string.IsNullOrWhiteSpace(paymentStatus))q=q.Where(x=>x.PaymentStatus==paymentStatus);return await q.OrderByDescending(x=>x.OrderDate).Take(100).Select(x=>View(x)).ToListAsync();}
     [HttpGet("orders/{id:guid}")]

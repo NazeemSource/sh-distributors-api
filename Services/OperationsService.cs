@@ -78,6 +78,40 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         catch { if (transaction is not null) await transaction.RollbackAsync(); throw; }
     }
 
+    public async Task<Order> UpdateOrder(Guid id, OrderRequest request)
+    {
+        if (request.Products.Count == 0) throw new BusinessException("validation_error", "At least one product is required.");
+        if (request.DeliveryDate < request.OrderDate) throw new BusinessException("invalid_date", "Delivery date cannot be before order date.");
+        if (request.Products.GroupBy(x => x.ProductId).Any(x => x.Count() > 1)) throw new BusinessException("duplicate_product", "A product can appear only once.");
+        var order = await db.Orders.Include(x => x.Products).SingleOrDefaultAsync(x => x.Id == id) ?? throw new BusinessException("not_found", "Order was not found.", 404);
+        var shop = await db.Shops.FindAsync(request.ShopId) ?? throw new BusinessException("not_found", "Shop was not found.", 404);
+        var rep = await db.Users.FindAsync(request.SalesRepId) ?? throw new BusinessException("not_found", "Sales rep was not found.", 404);
+        if (rep.Role != "Rep" || rep.CompanyId != shop.CompanyId) throw new BusinessException("invalid_sales_rep", "Sales rep is not assigned to the shop company.");
+        if (await db.Orders.AnyAsync(x => x.Id != id && x.OrderNumber == request.OrderNumber)) throw new BusinessException("duplicate_order", "Order number already exists.", 409);
+        var products = await db.Products.Where(x => request.Products.Select(y => y.ProductId).Contains(x.Id) && x.CompanyId == shop.CompanyId && x.Active).ToDictionaryAsync(x => x.Id);
+        if (products.Count != request.Products.Count) throw new BusinessException("invalid_product", "One or more products are invalid.");
+        foreach (var line in request.Products)
+        {
+            if (line.Quantity <= 0 || line.FreeIssueQuantity < 0 || line.UnitPrice < 0) throw new BusinessException("validation_error", "Quantities and prices are invalid.");
+            var returnedQuantity = order.Products.Where(x => x.ProductId == line.ProductId).Sum(x => x.Quantity + x.FreeIssueQuantity);
+            if (await inventory.GetCurrentStock(line.ProductId) + returnedQuantity < line.Quantity + line.FreeIssueQuantity) throw new BusinessException("insufficient_stock", $"Insufficient stock for {products[line.ProductId].Name}.", 409);
+        }
+        var newTotal = request.Products.Sum(x => decimal.Round(x.Quantity * x.UnitPrice, 2));
+        if (await payments.GetOrderPaidAmount(id) > newTotal) throw new BusinessException("invalid_total", "The updated total cannot be lower than payments already received.");
+        await using var transaction = await BeginTransaction();
+        try
+        {
+            inventory.ReverseOrderStock(order);
+            db.OrderProducts.RemoveRange(order.Products);
+            order.CompanyId=shop.CompanyId;order.ShopId=shop.Id;order.SalesRepId=rep.Id;order.OrderNumber=request.OrderNumber.Trim();order.OrderDate=request.OrderDate;order.DeliveryDate=request.DeliveryDate;order.DeliveryAddress=request.DeliveryAddress.Trim();order.Notes=request.Notes.Trim();
+            order.Products=request.Products.Select(x=>new OrderProduct { ProductId=x.ProductId,Quantity=x.Quantity,FreeIssueQuantity=x.FreeIssueQuantity,UnitPrice=x.UnitPrice,LineSubtotal=decimal.Round(x.Quantity*x.UnitPrice,2) }).ToList();
+            order.OrderTotal=newTotal;inventory.ProcessOrderStock(order);
+            await db.SaveChangesAsync();await payments.RecalculateOrderPaymentStatus(order);await db.SaveChangesAsync();
+            if(transaction is not null)await transaction.CommitAsync();return order;
+        }
+        catch { if(transaction is not null)await transaction.RollbackAsync();throw; }
+    }
+
     public async Task<OrderPayment> AddOrderPayment(Guid orderId, PaymentRequest request)
     {
         if (request.PaidAmount <= 0) throw new BusinessException("invalid_payment", "Payment amount must be greater than zero.");
