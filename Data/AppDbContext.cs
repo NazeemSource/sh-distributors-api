@@ -1,5 +1,6 @@
 using Distributor.Api.Domain;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Distributor.Api.Data;
 
@@ -85,6 +86,28 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
         foreach (var property in modelBuilder.Model.GetEntityTypes().SelectMany(x => x.GetProperties()).Where(x => x.ClrType == typeof(decimal)))
             property.SetColumnType("decimal(18,2)");
+
+        // MySQL's provider can return DATE values as DateTime in production. Explicit
+        // converters keep the domain model on DateOnly and make non-null dates portable.
+        var dateConverter = new ValueConverter<DateOnly, DateTime>(
+            value => value.ToDateTime(TimeOnly.MinValue),
+            value => DateOnly.FromDateTime(value));
+        var nullableDateConverter = new ValueConverter<DateOnly?, DateTime?>(
+            value => value.HasValue ? value.Value.ToDateTime(TimeOnly.MinValue) : null,
+            value => value.HasValue ? DateOnly.FromDateTime(value.Value) : null);
+        foreach (var property in modelBuilder.Model.GetEntityTypes().SelectMany(x => x.GetProperties()))
+        {
+            if (property.ClrType == typeof(DateOnly))
+            {
+                property.SetValueConverter(dateConverter);
+                property.SetColumnType("date");
+            }
+            else if (property.ClrType == typeof(DateOnly?))
+            {
+                property.SetValueConverter(nullableDateConverter);
+                property.SetColumnType("date");
+            }
+        }
     }
 
     private static void ConfigureEntity<T>(ModelBuilder modelBuilder, string table) where T : Entity
