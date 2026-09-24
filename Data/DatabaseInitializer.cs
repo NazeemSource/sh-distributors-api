@@ -1,6 +1,7 @@
 using Distributor.Api.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace Distributor.Api.Data;
 
@@ -11,7 +12,10 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
         if (db.Database.IsRelational() && !configuration.GetValue<bool>("Database:UseEnsureCreated"))
             await db.Database.MigrateAsync();
         else
+        {
             await db.Database.EnsureCreatedAsync();
+            if (db.Database.IsRelational()) await UpgradeLegacySchemaAsync();
+        }
         if (await db.Users.AnyAsync()) return;
 
         if (!environment.IsDevelopment())
@@ -36,6 +40,27 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
         };
         await db.Users.AddRangeAsync(users);
         await db.SaveChangesAsync();
+    }
+
+    private async Task UpgradeLegacySchemaAsync()
+    {
+        // Production began with EnsureCreated, so EF migrations cannot be applied to
+        // that existing database. Add only the missing column, keeping existing data.
+        var connection = db.Database.GetDbConnection();
+        var openedHere = connection.State != ConnectionState.Open;
+        if (openedHere) await connection.OpenAsync();
+        try
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'OrderProducts' AND COLUMN_NAME = 'DeliveredQuantity'";
+            var exists = Convert.ToInt64(await command.ExecuteScalarAsync()) > 0;
+            if (!exists)
+                await db.Database.ExecuteSqlRawAsync("ALTER TABLE `OrderProducts` ADD COLUMN `DeliveredQuantity` decimal(18,2) NOT NULL DEFAULT 0");
+        }
+        finally
+        {
+            if (openedHere) await connection.CloseAsync();
+        }
     }
 
     private User NewUser(string name, string username, string role, Guid? companyId, string territory, string password)
