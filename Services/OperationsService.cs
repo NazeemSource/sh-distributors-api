@@ -84,6 +84,7 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         if (request.DeliveryDate < request.OrderDate) throw new BusinessException("invalid_date", "Delivery date cannot be before order date.");
         if (request.Products.GroupBy(x => x.ProductId).Any(x => x.Count() > 1)) throw new BusinessException("duplicate_product", "A product can appear only once.");
         var order = await db.Orders.Include(x => x.Products).SingleOrDefaultAsync(x => x.Id == id) ?? throw new BusinessException("not_found", "Order was not found.", 404);
+        if (order.Products.Any(x => x.DeliveredQuantity > 0)) throw new BusinessException("already_delivered", "Delivered orders cannot be edited.", 409);
         var shop = await db.Shops.FindAsync(request.ShopId) ?? throw new BusinessException("not_found", "Shop was not found.", 404);
         var rep = await db.Users.FindAsync(request.SalesRepId) ?? throw new BusinessException("not_found", "Sales rep was not found.", 404);
         if (rep.Role != "Rep" || rep.CompanyId != shop.CompanyId) throw new BusinessException("invalid_sales_rep", "Sales rep is not assigned to the shop company.");
@@ -116,6 +117,7 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
     {
         var order = await db.Orders.Include(x => x.Products).Include(x => x.Payments).SingleOrDefaultAsync(x => x.Id == id)
             ?? throw new BusinessException("not_found", "Order was not found.", 404);
+        if (order.Products.Any(x => x.DeliveredQuantity > 0)) throw new BusinessException("already_delivered", "Delivered orders cannot be deleted.", 409);
         var cheques = await db.Cheques.Where(x => x.OrderId == id).ToListAsync();
         await using var transaction = await BeginTransaction();
         try
@@ -128,6 +130,50 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
             foreach (var cheque in cheques) { cheque.IsDeleted = true; cheque.DeletedAt = now; cheque.UpdatedAt = now; }
             await db.SaveChangesAsync();
             if (transaction is not null) await transaction.CommitAsync();
+        }
+        catch { if (transaction is not null) await transaction.RollbackAsync(); throw; }
+    }
+
+    public async Task<List<Order>> CompleteOrders(CompleteOrdersRequest request)
+    {
+        if (request.OrderIds.Count == 0 || request.OrderIds.Distinct().Count() != request.OrderIds.Count)
+            throw new BusinessException("invalid_orders", "Select one or more distinct orders.");
+        if (request.Products.Count == 0 || request.Products.GroupBy(x => x.ProductId).Any(x => x.Count() > 1) || request.Products.Any(x => x.Quantity <= 0))
+            throw new BusinessException("invalid_delivery", "Enter a positive delivery quantity for each selected product.");
+        var orders = await db.Orders.Include(x => x.Products).Where(x => request.OrderIds.Contains(x.Id)).OrderBy(x => x.OrderDate).ThenBy(x => x.Id).ToListAsync();
+        if (orders.Count != request.OrderIds.Count) throw new BusinessException("not_found", "One or more orders were not found.", 404);
+        if (orders.Any(x => x.OrderDate > request.DeliveryDate)) throw new BusinessException("invalid_date", "Delivery date cannot be before an order date.");
+        var remaining = orders.SelectMany(x => x.Products)
+            .GroupBy(x => x.ProductId)
+            .ToDictionary(x => x.Key, x => x.Sum(line => line.Quantity + line.FreeIssueQuantity - line.DeliveredQuantity));
+        if (request.Products.Any(x => !remaining.TryGetValue(x.ProductId, out var available) || x.Quantity > available))
+            throw new BusinessException("invalid_delivery", "Delivery quantity exceeds the selected orders' remaining quantity.");
+        await using var transaction = await BeginTransaction();
+        try
+        {
+            foreach (var delivery in request.Products)
+            {
+                var quantity = delivery.Quantity;
+                foreach (var order in orders)
+                foreach (var line in order.Products.Where(x => x.ProductId == delivery.ProductId))
+                {
+                    var available = line.Quantity + line.FreeIssueQuantity - line.DeliveredQuantity;
+                    var allocated = Math.Min(available, quantity);
+                    line.DeliveredQuantity += allocated;
+                    quantity -= allocated;
+                    if (quantity == 0) break;
+                }
+            }
+            foreach (var order in orders)
+            {
+                var delivered = order.Products.Sum(x => x.DeliveredQuantity);
+                order.Status = delivered == 0 ? "CONFIRMED" : order.Products.All(x => x.DeliveredQuantity == x.Quantity + x.FreeIssueQuantity) ? "DELIVERED" : "PARTIALLY_DELIVERED";
+                if (delivered > 0) order.DeliveryDate = request.DeliveryDate;
+                order.UpdatedAt = DateTimeOffset.UtcNow;
+            }
+            await db.SaveChangesAsync();
+            if (transaction is not null) await transaction.CommitAsync();
+            return orders;
         }
         catch { if (transaction is not null) await transaction.RollbackAsync(); throw; }
     }

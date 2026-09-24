@@ -58,6 +58,31 @@ public sealed class BusinessOperationsTests
     }
 
     [Fact]
+    public async Task Completing_selected_orders_allocates_quantities_and_tracks_partial_delivery()
+    {
+        await using var db = CreateDb();
+        var company = new Company { Code = "DELIVERY-CO", Name = "Delivery company" };
+        var shop = new Shop { CompanyId = company.Id, Code = "DELIVERY-SHOP", Name = "Delivery shop" };
+        var rep = new User { CompanyId = company.Id, Name = "Delivery rep", Username = "deliveryrep", PasswordHash = "hash", Role = "Rep" };
+        db.AddRange(company, shop, rep); await db.SaveChangesAsync();
+        var inventory = new InventoryService(db); var operations = new OperationsService(db, inventory, new PaymentService(db));
+        var product = await operations.CreateProduct(new ProductRequest(company.Id, "DELIVERY-SKU", "20000001", "Delivery product", "General", 10, 5, 1, null, 30));
+        var first = await operations.CreateOrder(new OrderRequest(shop.Id, rep.Id, "DELIVERY-1", new DateOnly(2026, 9, 20), new DateOnly(2026, 9, 20), "", "", [new(product.Id, 4, 0, 10)]));
+        var second = await operations.CreateOrder(new OrderRequest(shop.Id, rep.Id, "DELIVERY-2", new DateOnly(2026, 9, 21), new DateOnly(2026, 9, 21), "", "", [new(product.Id, 6, 0, 10)]));
+        await Assert.ThrowsAsync<BusinessException>(() => operations.CompleteOrders(new CompleteOrdersRequest([first.Id, second.Id], new DateOnly(2026, 9, 22), [new(product.Id, 11)])));
+        await operations.CompleteOrders(new CompleteOrdersRequest([first.Id, second.Id], new DateOnly(2026, 9, 22), [new(product.Id, 7)]));
+        Assert.Equal("DELIVERED", first.Status);
+        Assert.Equal(4, first.Products.Single().DeliveredQuantity);
+        Assert.Equal("PARTIALLY_DELIVERED", second.Status);
+        Assert.Equal(3, second.Products.Single().DeliveredQuantity);
+        Assert.Equal(new DateOnly(2026, 9, 22), second.DeliveryDate);
+        await Assert.ThrowsAsync<BusinessException>(() => operations.DeleteOrder(first.Id));
+        await operations.CompleteOrders(new CompleteOrdersRequest([second.Id], new DateOnly(2026, 9, 23), [new(product.Id, 3)]));
+        Assert.Equal("DELIVERED", second.Status);
+        Assert.Equal(6, second.Products.Single().DeliveredQuantity);
+    }
+
+    [Fact]
     public async Task Stock_in_updates_inventory_and_company_balance()
     {
         await using var db = CreateDb();

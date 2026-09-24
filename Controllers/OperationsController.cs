@@ -23,6 +23,8 @@ public sealed class OperationsController(AppDbContext db,OperationsService opera
 
     [HttpPost("orders")]
     public async Task<IActionResult>CreateOrder(OrderRequest r){if(!User.IsAdmin()&&r.SalesRepId!=User.UserId())return Forbid();var x=await operations.CreateOrder(r);return Created($"/api/orders/{x.Id}",View(x));}
+    [HttpPost("orders/complete"),Authorize(Roles="Admin")]
+    public async Task<IActionResult>CompleteOrders(CompleteOrdersRequest r){var completed=await operations.CompleteOrders(r);return Ok(completed.Select(View).ToList());}
     [HttpPut("orders/{id:guid}")]
     public async Task<IActionResult>UpdateOrder(Guid id,OrderRequest r){if(!User.IsAdmin()){var userId=User.UserId();if(r.SalesRepId!=userId||!await db.Orders.AnyAsync(x=>x.Id==id&&x.SalesRepId==userId))return Forbid();}var x=await operations.UpdateOrder(id,r);return Ok(View(x));}
     [HttpDelete("orders/{id:guid}"),Authorize(Roles="Admin")]
@@ -35,7 +37,7 @@ public sealed class OperationsController(AppDbContext db,OperationsService opera
     public async Task<IActionResult>OrderPayment(Guid id,PaymentRequest r){if(!User.IsAdmin()&&!await db.Orders.AnyAsync(x=>x.Id==id&&x.SalesRepId==User.UserId()))return NotFound();var x=await operations.AddOrderPayment(id,r);return Ok(PaymentView(x));}
 
     private static object View(StockIn x)=>new{x.Id,x.CompanyId,x.StockInNumber,x.StockInDate,x.StockTotal,x.PaymentStatus,x.Notes,Products=x.Products.Select(p=>new{p.Id,p.ProductId,p.Quantity,p.UnitCost,p.LineTotal})};
-    private static object View(Order x)=>new{x.Id,x.CompanyId,x.ShopId,x.SalesRepId,x.OrderNumber,x.OrderDate,x.DeliveryDate,x.OrderTotal,x.PaymentStatus,x.Status,x.DeliveryAddress,x.Notes,Payments=x.Payments.Select(p=>PaymentView(p)),Products=x.Products.Select(p=>new{p.Id,p.ProductId,p.Quantity,p.FreeIssueQuantity,p.UnitPrice,p.LineSubtotal})};
+    private static object View(Order x)=>new{x.Id,x.CompanyId,x.ShopId,x.SalesRepId,x.OrderNumber,x.OrderDate,x.DeliveryDate,x.OrderTotal,x.PaymentStatus,x.Status,x.DeliveryAddress,x.Notes,Payments=x.Payments.Select(p=>PaymentView(p)),Products=x.Products.Select(p=>new{p.Id,p.ProductId,p.Quantity,p.FreeIssueQuantity,p.DeliveredQuantity,p.UnitPrice,p.LineSubtotal})};
     private static object PaymentView(OrderPayment x)=>new{x.Id,x.OrderId,x.PaymentDate,x.PaidAmount,x.Method,x.Reference,x.CreatedAt};
     private static object PaymentView(StockInPayment x)=>new{x.Id,x.StockInId,x.PaymentDate,x.PaidAmount,x.Method,x.Reference,x.CreatedAt};
 }

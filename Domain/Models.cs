@@ -135,6 +135,7 @@ public sealed class OrderProduct : Entity
     public Product? Product { get; set; }
     public decimal Quantity { get; set; }
     public decimal FreeIssueQuantity { get; set; }
+    public decimal DeliveredQuantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal LineSubtotal { get; set; }
 }
