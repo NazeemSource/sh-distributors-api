@@ -42,15 +42,24 @@ public sealed class BusinessOperationsTests
         using var response=System.Text.Json.JsonDocument.Parse(json);
         Assert.Equal(2,response.RootElement[0].GetProperty("payments").GetArrayLength());
         Assert.Equal(500,response.RootElement[0].GetProperty("payments").EnumerateArray().Sum(x=>x.GetProperty("paidAmount").GetDecimal()));
+        var firstPayment=await db.OrderPayments.SingleAsync(x=>x.OrderId==order.Id&&x.Reference=="PAY-01");
+        await operations.DeleteOrderPayment(order.Id,firstPayment.Id);
+        Assert.Equal(200,await payments.GetOrderBalance(order.Id));
+        Assert.Equal("PARTIALLY_PAID",(await db.Orders.SingleAsync(x=>x.Id==order.Id)).PaymentStatus);
+        Assert.Single(await db.OrderPayments.Where(x=>x.OrderId==order.Id).ToListAsync());
+        await Assert.ThrowsAsync<BusinessException>(()=>operations.DeleteOrderPayment(order.Id,firstPayment.Id));
 
         var checkOrder=await operations.CreateOrder(new OrderRequest(shop.Id,rep.Id,"ORD-CHECK",new DateOnly(2026,9,20),new DateOnly(2026,9,21),"","",[new(product.Id,2,0,50)]));
         await Assert.ThrowsAsync<BusinessException>(()=>operations.AddOrderPayment(checkOrder.Id,new PaymentRequest(new DateOnly(2026,9,20),50,"Check","CHK-01")));
         Assert.Equal(0,await payments.GetOrderPaidAmount(checkOrder.Id));
-        await operations.AddOrderPayment(checkOrder.Id,new PaymentRequest(new DateOnly(2026,9,20),50,"Check","CHK-01","Bank - 01",new DateOnly(2026,9,22)));
+        var checkPayment=await operations.AddOrderPayment(checkOrder.Id,new PaymentRequest(new DateOnly(2026,9,20),50,"Check","CHK-01","Bank - 01",new DateOnly(2026,9,22)));
         Assert.Equal(50,await payments.GetOrderPaidAmount(checkOrder.Id));
         Assert.Single(await db.Cheques.Where(x=>x.OrderId==checkOrder.Id).ToListAsync());
         await Assert.ThrowsAsync<BusinessException>(()=>operations.AddOrderPayment(checkOrder.Id,new PaymentRequest(new DateOnly(2026,9,20),10,"Check","CHK-01","Bank - 01",new DateOnly(2026,9,22))));
         Assert.Equal(50,await payments.GetOrderPaidAmount(checkOrder.Id));
+        await operations.DeleteOrderPayment(checkOrder.Id,checkPayment.Id);
+        Assert.Equal(0,await payments.GetOrderPaidAmount(checkOrder.Id));
+        Assert.Empty(await db.Cheques.Where(x=>x.OrderId==checkOrder.Id).ToListAsync());
         await operations.DeleteOrder(checkOrder.Id);
         Assert.Equal(88,await inventory.GetCurrentStock(product.Id));
         Assert.Empty(await db.Orders.Where(x=>x.Id==checkOrder.Id).ToListAsync());

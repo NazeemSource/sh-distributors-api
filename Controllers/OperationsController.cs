@@ -35,6 +35,8 @@ public sealed class OperationsController(AppDbContext db,OperationsService opera
     public async Task<IActionResult>Order(Guid id){var q=db.Orders.AsNoTracking().Include(x=>x.Payments).Include(x=>x.Products).AsQueryable();if(!User.IsAdmin())q=q.Where(x=>x.SalesRepId==User.UserId());return await q.SingleOrDefaultAsync(x=>x.Id==id)is{}x?Ok(View(x)):NotFound();}
     [HttpPost("orders/{id:guid}/payments")]
     public async Task<IActionResult>OrderPayment(Guid id,PaymentRequest r){if(!User.IsAdmin()&&!await db.Orders.AnyAsync(x=>x.Id==id&&x.SalesRepId==User.UserId()))return NotFound();var x=await operations.AddOrderPayment(id,r);return Ok(PaymentView(x));}
+    [HttpDelete("orders/{id:guid}/payments/{paymentId:guid}"),Authorize(Roles="Admin")]
+    public async Task<IActionResult>DeleteOrderPayment(Guid id,Guid paymentId){await operations.DeleteOrderPayment(id,paymentId);return NoContent();}
 
     private static object View(StockIn x)=>new{x.Id,x.CompanyId,x.StockInNumber,x.StockInDate,x.StockTotal,x.PaymentStatus,x.Notes,Products=x.Products.Select(p=>new{p.Id,p.ProductId,p.Quantity,p.UnitCost,p.LineTotal})};
     private static object View(Order x)=>new{x.Id,x.CompanyId,x.ShopId,x.SalesRepId,x.OrderNumber,x.OrderDate,x.DeliveryDate,x.OrderTotal,x.PaymentStatus,x.Status,x.DeliveryAddress,x.Notes,Payments=x.Payments.Select(p=>PaymentView(p)),Products=x.Products.Select(p=>new{p.Id,p.ProductId,p.Quantity,p.FreeIssueQuantity,p.DeliveredQuantity,p.UnitPrice,p.LineSubtotal})};

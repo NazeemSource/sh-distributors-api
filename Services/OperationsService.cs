@@ -198,6 +198,28 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         catch { if(transaction is not null)await transaction.RollbackAsync(); throw; }
     }
 
+    public async Task DeleteOrderPayment(Guid orderId, Guid paymentId)
+    {
+        var order = await db.Orders.SingleOrDefaultAsync(x => x.Id == orderId)
+            ?? throw new BusinessException("not_found", "Order was not found.", 404);
+        var payment = await db.OrderPayments.SingleOrDefaultAsync(x => x.Id == paymentId && x.OrderId == orderId)
+            ?? throw new BusinessException("not_found", "Payment was not found.", 404);
+        await using var transaction = await BeginTransaction();
+        try {
+            var now = DateTimeOffset.UtcNow;
+            payment.IsDeleted = true; payment.DeletedAt = now; payment.UpdatedAt = now;
+            if (string.Equals(payment.Method, "Check", StringComparison.OrdinalIgnoreCase)) {
+                var cheque = await db.Cheques.SingleOrDefaultAsync(x => x.OrderId == orderId && x.ChequeNumber == payment.Reference);
+                if (cheque is not null) { cheque.IsDeleted = true; cheque.DeletedAt = now; cheque.UpdatedAt = now; }
+            }
+            await db.SaveChangesAsync();
+            await payments.RecalculateOrderPaymentStatus(order);
+            await db.SaveChangesAsync();
+            if (transaction is not null) await transaction.CommitAsync();
+        }
+        catch { if (transaction is not null) await transaction.RollbackAsync(); throw; }
+    }
+
     public async Task<StockInPayment> AddStockInPayment(Guid stockInId, PaymentRequest request)
     {
         if (request.PaidAmount <= 0) throw new BusinessException("invalid_payment", "Payment amount must be greater than zero.");
