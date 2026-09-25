@@ -26,6 +26,7 @@ builder.Services.AddScoped<DatabaseInitializer>();
 builder.Services.AddScoped<InventoryService>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<OperationsService>();
+builder.Services.AddScoped<OfflineData>();
 builder.Services.AddSingleton<TokenService>();
 if (builder.Configuration.GetValue<bool>("Database:UseInMemory"))
     builder.Services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase("DistributorApi"));
@@ -36,7 +37,7 @@ else
 }
 builder.Services.AddCors(options => options.AddPolicy("Apps", policy => policy
     .WithOrigins(builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? [])
-    .AllowAnyHeader().AllowAnyMethod()));
+    .AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("X-Offline-Versions")));
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -64,6 +65,7 @@ app.UseExceptionHandler();
 app.UseCors("Apps");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<OfflineSyncMiddleware>();
 app.MapHealthChecks("/health");
 app.MapControllers();
 await using (var scope = app.Services.CreateAsyncScope())

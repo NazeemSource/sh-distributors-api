@@ -230,5 +230,5 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         catch { if(transaction is not null)await transaction.RollbackAsync(); throw; }
     }
 
-    private async Task<IDbContextTransaction?> BeginTransaction() => db.Database.IsRelational() ? await db.Database.BeginTransactionAsync() : null;
+    private async Task<IDbContextTransaction?> BeginTransaction() => db.Database.IsRelational() && db.Database.CurrentTransaction is null ? await db.Database.BeginTransactionAsync() : null;
 }

@@ -41,12 +41,14 @@ jobs:
           ASPNETCORE_URLS: http://127.0.0.1:5080
           ConnectionStrings__Default: Server=127.0.0.1;Port=3306;Database=distributor_api;User=root;Password=ci-disposable-password;SslMode=Disabled;AllowPublicKeyRetrieval=True
           Jwt__Key: ci-only-random-key-with-at-least-32-characters
-          Seed__Enabled: 'false'
+          Seed__Enabled: 'true'
+          Seed__AdminPassword: ci-test-1234
         run: |
           dotnet run --no-build --no-launch-profile --configuration Release > /tmp/shdistrapi.log 2>&1 &
           pid=$!
           for i in $(seq 1 45); do curl -fsS http://127.0.0.1:5080/health && ready=1 && break; sleep 2; done
           test "${ready:-0}" = 1 || { cat /tmp/shdistrapi.log; exit 1; }
+          TEST_ADMIN_PASSWORD=ci-test-1234 node scripts/verify-offline.mjs http://127.0.0.1:5080
           kill "$pid"
       - run: dotnet list package --vulnerable --include-transitive
       - name: Verify rep and admin integration
@@ -60,6 +62,7 @@ jobs:
           trap 'kill "$pid" || true' EXIT
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5095/health && break; sleep 1; done
           node scripts/verify-rep-flow.mjs
+          node scripts/verify-offline.mjs
       - name: Publish Linux API
         if: github.event_name != 'pull_request'
         run: dotnet publish -c Release -r linux-x64 --self-contained true -o release/api

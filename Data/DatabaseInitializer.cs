@@ -16,6 +16,7 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
             await db.Database.EnsureCreatedAsync();
             if (db.Database.IsRelational()) await UpgradeLegacySchemaAsync();
         }
+        if (db.Database.IsRelational()) await db.Database.ExecuteSqlRawAsync(Distributor.Api.Services.OfflineSyncMiddleware.Schema);
         if (await db.Users.AnyAsync()) return;
 
         if (!environment.IsDevelopment())
