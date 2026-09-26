@@ -9,6 +9,26 @@ namespace API.Tests;
 public sealed class BusinessOperationsTests
 {
     [Fact]
+    public async Task New_invoice_numbers_use_a_shared_daily_sequence()
+    {
+        await using var db=CreateDb();
+        var company=new Company { Code="INVOICE-CO",Name="Invoice company" };
+        var shop=new Shop { CompanyId=company.Id,Code="INVOICE-SHOP",Name="Invoice shop" };
+        var rep=new User { CompanyId=company.Id,Name="Invoice rep",Username="invoice-rep",PasswordHash="hash",Role="Rep" };
+        db.AddRange(company,shop,rep);await db.SaveChangesAsync();
+        var operations=new OperationsService(db,new InventoryService(db),new PaymentService(db));
+        var product=await operations.CreateProduct(new ProductRequest(company.Id,"INVOICE-SKU","90000001","Invoice product","General",10,5,1,null,20));
+        var date=new DateOnly(2026,9,26);
+        OrderRequest Request(DateOnly on)=>new(shop.Id,rep.Id,"INV-260920260001",on,on,"","",[new(product.Id,1,0,10)]);
+        var first=await operations.CreateOrder(Request(date));
+        var second=await operations.CreateOrder(Request(date));
+        var nextDay=await operations.CreateOrder(Request(date.AddDays(1)));
+        Assert.Equal("INV-260920260001",first.OrderNumber);
+        Assert.Equal("INV-260920260002",second.OrderNumber);
+        Assert.Equal("INV-270920260001",nextDay.OrderNumber);
+    }
+
+    [Fact]
     public async Task Order_updates_inventory_and_payment_status_and_shop_outstanding()
     {
         await using var db = CreateDb();

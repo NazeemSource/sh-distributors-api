@@ -3,6 +3,8 @@ using Distributor.Api.Data;
 using Distributor.Api.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Distributor.Api.Services;
 
@@ -56,7 +58,9 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         var shop = await db.Shops.FindAsync(request.ShopId) ?? throw new BusinessException("not_found", "Shop was not found.", 404);
         var rep = await db.Users.FindAsync(request.SalesRepId) ?? throw new BusinessException("not_found", "Sales rep was not found.", 404);
         if (rep.Role != "Rep" || rep.CompanyId != shop.CompanyId) throw new BusinessException("invalid_sales_rep", "Sales rep is not assigned to the shop company.");
-        if (await db.Orders.AnyAsync(x => x.OrderNumber == request.OrderNumber)) throw new BusinessException("duplicate_order", "Order number already exists.", 409);
+        var requestedNumber=request.OrderNumber.Trim();
+        var numberedInvoice=Regex.IsMatch(requestedNumber, @"^INV-\d{12,}$", RegexOptions.CultureInvariant);
+        if (!numberedInvoice && await db.Orders.AnyAsync(x => x.OrderNumber == requestedNumber)) throw new BusinessException("duplicate_order", "Order number already exists.", 409);
         if (request.Products.GroupBy(x => x.ProductId).Any(x => x.Count() > 1)) throw new BusinessException("duplicate_product", "A product can appear only once.");
         var products = await db.Products.Where(x => request.Products.Select(y => y.ProductId).Contains(x.Id) && x.CompanyId == shop.CompanyId && x.Active).ToDictionaryAsync(x => x.Id);
         if (products.Count != request.Products.Count) throw new BusinessException("invalid_product", "One or more products are invalid.");
@@ -68,7 +72,8 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         await using var transaction = await BeginTransaction();
         try
         {
-            var order = new Order { CompanyId=shop.CompanyId, ShopId=shop.Id, SalesRepId=rep.Id, OrderNumber=request.OrderNumber.Trim(), OrderDate=request.OrderDate, DeliveryDate=request.DeliveryDate, DeliveryAddress=request.DeliveryAddress.Trim(), Notes=request.Notes.Trim(), Products=request.Products.Select(x => new OrderProduct { ProductId=x.ProductId, Quantity=x.Quantity, FreeIssueQuantity=x.FreeIssueQuantity, UnitPrice=x.UnitPrice, LineSubtotal=decimal.Round(x.Quantity*x.UnitPrice,2) }).ToList() };
+            var orderNumber=numberedInvoice?await NextInvoiceNumber(request.OrderDate):requestedNumber;
+            var order = new Order { CompanyId=shop.CompanyId, ShopId=shop.Id, SalesRepId=rep.Id, OrderNumber=orderNumber, OrderDate=request.OrderDate, DeliveryDate=request.DeliveryDate, DeliveryAddress=request.DeliveryAddress.Trim(), Notes=request.Notes.Trim(), Products=request.Products.Select(x => new OrderProduct { ProductId=x.ProductId, Quantity=x.Quantity, FreeIssueQuantity=x.FreeIssueQuantity, UnitPrice=x.UnitPrice, LineSubtotal=decimal.Round(x.Quantity*x.UnitPrice,2) }).ToList() };
             order.OrderTotal = order.Products.Sum(x => x.LineSubtotal);
             db.Orders.Add(order); inventory.ProcessOrderStock(order);
             await db.SaveChangesAsync();
@@ -76,6 +81,14 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
             return order;
         }
         catch { if (transaction is not null) await transaction.RollbackAsync(); throw; }
+    }
+
+    private async Task<string> NextInvoiceNumber(DateOnly date)
+    {
+        var prefix="INV-"+date.ToString("ddMMyyyy",CultureInfo.InvariantCulture);
+        var existing=await db.Orders.Where(x=>x.OrderNumber.StartsWith(prefix)).Select(x=>x.OrderNumber).ToListAsync();
+        var last=existing.Select(number=>int.TryParse(number[prefix.Length..],NumberStyles.None,CultureInfo.InvariantCulture,out var sequence)?sequence:0).DefaultIfEmpty().Max();
+        return prefix+(last+1).ToString("D4",CultureInfo.InvariantCulture);
     }
 
     public async Task<Order> UpdateOrder(Guid id, OrderRequest request)
