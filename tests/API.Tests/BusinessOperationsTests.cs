@@ -9,6 +9,21 @@ namespace API.Tests;
 public sealed class BusinessOperationsTests
 {
     [Fact]
+    public async Task Stock_in_updates_unit_cost_and_selling_price()
+    {
+        await using var db=CreateDb();
+        var company=new Company { Code="PRICE-CO", Name="Price company" };
+        db.Companies.Add(company);await db.SaveChangesAsync();
+        var operations=new OperationsService(db,new InventoryService(db),new PaymentService(db));
+        var product=await operations.CreateProduct(new ProductRequest(company.Id,"PRICE-SKU","90000002","Price product","General",100,70,1,null,0));
+        await operations.CreateStockIn(new StockInRequest(company.Id,"GRN-PRICE",new DateOnly(2026,9,27),"",[new(product.Id,3,80,120)]));
+        await db.Entry(product).ReloadAsync();
+        Assert.Equal(80,product.CostPrice);
+        Assert.Equal(120,product.SellingPrice);
+        Assert.Equal(3,await new InventoryService(db).GetCurrentStock(product.Id));
+    }
+
+    [Fact]
     public async Task New_invoice_numbers_use_a_shared_daily_sequence()
     {
         await using var db=CreateDb();

@@ -37,13 +37,20 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         if (request.Products.GroupBy(x => x.ProductId).Any(x => x.Count() > 1)) throw new BusinessException("duplicate_product", "A product can appear only once.");
         var products = await db.Products.Where(x => request.Products.Select(y => y.ProductId).Contains(x.Id) && x.CompanyId == request.CompanyId && x.Active).ToDictionaryAsync(x => x.Id);
         if (products.Count != request.Products.Count) throw new BusinessException("invalid_product", "One or more products are invalid.");
-        if (request.Products.Any(x => x.Quantity <= 0 || x.UnitCost < 0)) throw new BusinessException("validation_error", "Quantities must be positive and costs cannot be negative.");
+        if (request.Products.Any(x => x.Quantity <= 0 || x.UnitCost < 0 || x.UnitPrice < 0)) throw new BusinessException("validation_error", "Quantities must be positive and prices cannot be negative.");
         await using var transaction = await BeginTransaction();
         try
         {
             var stockIn = new StockIn { CompanyId=request.CompanyId, StockInNumber=request.StockInNumber.Trim(), StockInDate=request.StockInDate, Notes=request.Notes.Trim(), Products=request.Products.Select(x => new StockInProduct { ProductId=x.ProductId, Quantity=x.Quantity, UnitCost=x.UnitCost, LineTotal=decimal.Round(x.Quantity*x.UnitCost,2) }).ToList() };
             stockIn.StockTotal = stockIn.Products.Sum(x => x.LineTotal);
             db.StockIns.Add(stockIn); inventory.ProcessStockIn(stockIn);
+            foreach (var line in request.Products)
+            {
+                var product = products[line.ProductId];
+                product.CostPrice = line.UnitCost;
+                if (line.UnitPrice.HasValue) product.SellingPrice = line.UnitPrice.Value;
+                product.UpdatedAt = DateTimeOffset.UtcNow;
+            }
             await db.SaveChangesAsync();
             if (transaction is not null) await transaction.CommitAsync();
             return stockIn;
