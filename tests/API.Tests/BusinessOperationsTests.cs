@@ -16,11 +16,17 @@ public sealed class BusinessOperationsTests
         db.Companies.Add(company);await db.SaveChangesAsync();
         var operations=new OperationsService(db,new InventoryService(db),new PaymentService(db));
         var product=await operations.CreateProduct(new ProductRequest(company.Id,"PRICE-SKU","90000002","Price product","General",100,70,1,null,0));
-        await operations.CreateStockIn(new StockInRequest(company.Id,"GRN-PRICE",new DateOnly(2026,9,27),"",[new(product.Id,3,80,120)]));
+        var stockIn=await operations.CreateStockIn(new StockInRequest(company.Id,"GRN-PRICE",new DateOnly(2026,9,27),"",[new(product.Id,3,80,120)]));
         await db.Entry(product).ReloadAsync();
         Assert.Equal(80,product.CostPrice);
         Assert.Equal(120,product.SellingPrice);
         Assert.Equal(3,await new InventoryService(db).GetCurrentStock(product.Id));
+        await operations.AddStockInPayment(stockIn.Id,new PaymentRequest(new DateOnly(2026,9,27),100,"Cash","RECEIPT-1"));
+        var controller=new Distributor.Api.Controllers.OperationsController(db,operations,new PaymentService(db));
+        var json=System.Text.Json.JsonSerializer.Serialize(await controller.StockIns(null,null,null,null),new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+        using var response=System.Text.Json.JsonDocument.Parse(json);
+        Assert.Equal("PARTIALLY_PAID",response.RootElement[0].GetProperty("paymentStatus").GetString());
+        Assert.Equal(100,response.RootElement[0].GetProperty("payments")[0].GetProperty("paidAmount").GetDecimal());
     }
 
     [Fact]
