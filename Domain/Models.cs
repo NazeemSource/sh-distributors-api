@@ -18,6 +18,11 @@ public sealed class User : Entity
     public required string PasswordHash { get; set; }
     public required string Role { get; set; }
     public string Territory { get; set; } = "";
+    public string Address { get; set; } = "";
+    public string Nic { get; set; } = "";
+    public string Phone { get; set; } = "";
+    public string Email { get; set; } = "";
+    public decimal MonthlyTarget { get; set; }
     public bool Active { get; set; } = true;
 }
 

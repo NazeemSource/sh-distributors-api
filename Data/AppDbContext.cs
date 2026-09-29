@@ -33,6 +33,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         user.Property(x => x.Role).HasMaxLength(30).IsRequired();
         user.Property(x => x.CompanyId).HasColumnType("char(36)");
         user.Property(x => x.Territory).HasMaxLength(120);
+        user.Property(x => x.Address).HasMaxLength(300);
+        user.Property(x => x.Nic).HasMaxLength(40);
+        user.Property(x => x.Phone).HasMaxLength(40);
+        user.Property(x => x.Email).HasMaxLength(180);
+        user.Property(x => x.MonthlyTarget).HasPrecision(18, 2);
         user.HasQueryFilter(x => !x.IsDeleted);
         user.HasOne(x => x.Company).WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.Restrict);
 

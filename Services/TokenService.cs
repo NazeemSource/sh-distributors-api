@@ -29,7 +29,7 @@ public sealed class TokenService(IConfiguration configuration)
     }
 }
 
-public sealed record UserView(Guid Id, Guid? CompanyId, string Name, string Username, string Role, string Territory, bool Active, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt)
+public sealed record UserView(Guid Id, Guid? CompanyId, string Name, string Username, string Role, string Territory, string Address, string Nic, string Phone, string Email, decimal MonthlyTarget, bool Active, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt)
 {
-    public static UserView From(User user) => new(user.Id, user.CompanyId, user.Name, user.Username, user.Role, user.Territory, user.Active, user.CreatedAt, user.UpdatedAt);
+    public static UserView From(User user) => new(user.Id, user.CompanyId, user.Name, user.Username, user.Role, user.Territory, user.Address, user.Nic, user.Phone, user.Email, user.MonthlyTarget, user.Active, user.CreatedAt, user.UpdatedAt);
 }

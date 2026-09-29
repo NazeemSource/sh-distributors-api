@@ -34,7 +34,7 @@ public sealed class UsersController(AppDbContext db, IPasswordHasher<User> hashe
         var username = request.Username.Trim().ToLowerInvariant();
         if (request.CompanyId.HasValue && !await db.Companies.AnyAsync(x => x.Id == request.CompanyId)) return NotFound(new { error = "company_not_found", message = "Company was not found." });
         if (await db.Users.AnyAsync(x => x.Username == username)) return Conflict(new { error = "username_exists", message = "Username is already in use." });
-        var user = new User { Name = request.Name.Trim(), Username = username, PasswordHash = "", Role = NormalizeRole(request.Role), CompanyId = request.CompanyId, Territory = request.Territory.Trim(), Active = request.Active };
+        var user = new User { Name = request.Name.Trim(), Username = username, PasswordHash = "", Role = NormalizeRole(request.Role), CompanyId = request.CompanyId, Territory = request.Territory.Trim(), Address = request.Address.Trim(), Nic = request.Nic.Trim(), Phone = request.Phone.Trim(), Email = request.Email.Trim(), MonthlyTarget = request.MonthlyTarget, Active = request.Active };
         user.PasswordHash = hasher.HashPassword(user, request.Password);
         db.Users.Add(user);
         await db.SaveChangesAsync();
@@ -52,7 +52,7 @@ public sealed class UsersController(AppDbContext db, IPasswordHasher<User> hashe
         if (request.CompanyId.HasValue && !await db.Companies.AnyAsync(x => x.Id == request.CompanyId)) return NotFound(new { error = "company_not_found", message = "Company was not found." });
         if (id == User.UserId() && !request.Active) return BadRequest(new { error = "cannot_deactivate_self", message = "You cannot deactivate your own account." });
         user.Name = request.Name.Trim(); user.Role = role; user.CompanyId = role == "Admin" ? null : request.CompanyId;
-        user.Territory = request.Territory.Trim(); user.Active = request.Active; user.UpdatedAt = DateTimeOffset.UtcNow;
+        user.Territory = request.Territory.Trim(); user.Address = request.Address.Trim(); user.Nic = request.Nic.Trim(); user.Phone = request.Phone.Trim(); user.Email = request.Email.Trim(); user.MonthlyTarget = request.MonthlyTarget; user.Active = request.Active; user.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync();
         return Ok(UserView.From(user));
     }
