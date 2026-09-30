@@ -92,7 +92,7 @@ jobs:
           source: release,deploy
           target: /home/cwebsite/apps/shdistrapi-builds/${{ github.sha }}
           overwrite: true
-          command_timeout: 15m
+          command_timeout: 30m
       - uses: appleboy/ssh-action@v1
         with:
           host: 198.54.121.31
