@@ -5,6 +5,7 @@ public sealed record CreateUserRequest(Guid? CompanyId, string Name, string User
 public sealed record UpdateUserRequest(Guid? CompanyId, string Name, string Role, string Territory, bool Active, string Address = "", string Nic = "", string Phone = "", string Email = "", decimal MonthlyTarget = 0);
 public sealed record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 public sealed record AdminResetPasswordRequest(string NewPassword);
+public sealed record BrandingSettingsRequest(string Name, string LogoDataUrl = "");
 public sealed record CompanyRequest(string Code, string Name, string ContactName, string Phone, string Address, bool Active = true);
 public sealed record ShopRequest(Guid CompanyId, string Code, string Name, string ContactName, string Phone, string Address, string City, decimal CreditLimit, bool Active = true);
 public sealed record ProductRequest(Guid CompanyId, string Sku, string Barcode, string Name, string Category, decimal SellingPrice, decimal CostPrice, decimal ReorderLevel, DateOnly? ExpiryDate, decimal OpeningStock = 0, bool Active = true);

@@ -26,6 +26,12 @@ public sealed class User : Entity
     public bool Active { get; set; } = true;
 }
 
+public sealed class BrandingSetting : Entity
+{
+    public required string Name { get; set; }
+    public string LogoDataUrl { get; set; } = "";
+}
+
 public sealed class Company : Entity
 {
     public required string Code { get; set; }

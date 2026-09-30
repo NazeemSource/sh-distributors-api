@@ -46,22 +46,47 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
     private async Task UpgradeLegacySchemaAsync()
     {
         // Production began with EnsureCreated, so EF migrations cannot be applied to
-        // that existing database. Add only the missing column, keeping existing data.
+        // that existing database. Apply additive, idempotent upgrades while keeping data.
         var connection = db.Database.GetDbConnection();
         var openedHere = connection.State != ConnectionState.Open;
         if (openedHere) await connection.OpenAsync();
         try
         {
-            await using var command = connection.CreateCommand();
-            command.CommandText = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'OrderProducts' AND COLUMN_NAME = 'DeliveredQuantity'";
-            var exists = Convert.ToInt64(await command.ExecuteScalarAsync()) > 0;
-            if (!exists)
-                await db.Database.ExecuteSqlRawAsync("ALTER TABLE `OrderProducts` ADD COLUMN `DeliveredQuantity` decimal(18,2) NOT NULL DEFAULT 0");
+            await AddColumnIfMissingAsync(connection, "OrderProducts", "DeliveredQuantity", "decimal(18,2) NOT NULL DEFAULT 0");
+            await AddColumnIfMissingAsync(connection, "Users", "Address", "varchar(300) NOT NULL DEFAULT ''");
+            await AddColumnIfMissingAsync(connection, "Users", "Nic", "varchar(40) NOT NULL DEFAULT ''");
+            await AddColumnIfMissingAsync(connection, "Users", "Phone", "varchar(40) NOT NULL DEFAULT ''");
+            await AddColumnIfMissingAsync(connection, "Users", "Email", "varchar(180) NOT NULL DEFAULT ''");
+            await AddColumnIfMissingAsync(connection, "Users", "MonthlyTarget", "decimal(18,2) NOT NULL DEFAULT 0");
+            await db.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `BrandingSettings` (
+                  `Id` char(36) NOT NULL,
+                  `Name` varchar(120) NOT NULL,
+                  `LogoDataUrl` longtext NOT NULL,
+                  `IsDeleted` tinyint(1) NOT NULL DEFAULT 0,
+                  `DeletedAt` datetime(6) NULL,
+                  `CreatedAt` datetime(6) NOT NULL,
+                  `UpdatedAt` datetime(6) NOT NULL,
+                  CONSTRAINT `PK_BrandingSettings` PRIMARY KEY (`Id`)
+                ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                """);
         }
         finally
         {
             if (openedHere) await connection.CloseAsync();
         }
+    }
+
+    private static async Task AddColumnIfMissingAsync(System.Data.Common.DbConnection connection, string table, string column, string definition)
+    {
+        await using var check = connection.CreateCommand();
+        check.CommandText = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = @table AND COLUMN_NAME = @column";
+        var tableParameter = check.CreateParameter(); tableParameter.ParameterName = "@table"; tableParameter.Value = table; check.Parameters.Add(tableParameter);
+        var columnParameter = check.CreateParameter(); columnParameter.ParameterName = "@column"; columnParameter.Value = column; check.Parameters.Add(columnParameter);
+        if (Convert.ToInt64(await check.ExecuteScalarAsync()) > 0) return;
+        await using var alter = connection.CreateCommand();
+        alter.CommandText = $"ALTER TABLE `{table}` ADD COLUMN `{column}` {definition}";
+        await alter.ExecuteNonQueryAsync();
     }
 
     private User NewUser(string name, string username, string role, Guid? companyId, string territory, string password)

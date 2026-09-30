@@ -7,6 +7,7 @@ namespace Distributor.Api.Data;
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<User> Users => Set<User>();
+    public DbSet<BrandingSetting> BrandingSettings => Set<BrandingSetting>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<Shop> Shops => Set<Shop>();
     public DbSet<Product> Products => Set<Product>();
@@ -40,6 +41,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         user.Property(x => x.MonthlyTarget).HasPrecision(18, 2);
         user.HasQueryFilter(x => !x.IsDeleted);
         user.HasOne(x => x.Company).WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.Restrict);
+
+        var branding = modelBuilder.Entity<BrandingSetting>();
+        branding.ToTable("BrandingSettings");
+        branding.HasKey(x => x.Id);
+        branding.Property(x => x.Id).HasColumnType("char(36)");
+        branding.Property(x => x.Name).HasMaxLength(120).IsRequired();
+        branding.Property(x => x.LogoDataUrl).HasColumnType("longtext");
+        branding.HasQueryFilter(x => !x.IsDeleted);
 
         ConfigureEntity<Company>(modelBuilder, "Companies");
         ConfigureEntity<Shop>(modelBuilder, "Shops");
