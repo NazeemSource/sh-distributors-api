@@ -12,6 +12,10 @@ namespace Distributor.Api.Controllers;
 [ApiController,Route("api"),Authorize]
 public sealed class OperationsController(AppDbContext db,OperationsService operations,PaymentService payments):ControllerBase
 {
+    [HttpDelete("stock-ins/{id:guid}"),Authorize(Roles="Admin")]
+    public async Task<IActionResult> DeleteStockIn(Guid id){await operations.DeleteStockIn(id);return NoContent();}
+    [HttpDelete("stock-ins/{id:guid}/payments/{paymentId:guid}"),Authorize(Roles="Admin")]
+    public async Task<IActionResult> DeleteStockInPayment(Guid id,Guid paymentId){await operations.DeleteStockInPayment(id,paymentId);return NoContent();}
     [HttpPost("stock-ins"),Authorize(Roles="Admin")]
     public async Task<IActionResult>CreateStockIn(StockInRequest r){var x=await operations.CreateStockIn(r);return Created($"/api/stock-ins/{x.Id}",View(x));}
     [HttpGet("stock-ins"),Authorize(Roles="Admin")]

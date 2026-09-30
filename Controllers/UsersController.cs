@@ -68,6 +68,18 @@ public sealed class UsersController(AppDbContext db, IPasswordHasher<User> hashe
         return NoContent();
     }
 
+    [HttpDelete("{id:guid}/record")]
+    public async Task<IActionResult> DeleteRep(Guid id)
+    {
+        if (id == User.UserId()) return BadRequest(new { message = "You cannot delete your own account." });
+        var user = await db.Users.SingleOrDefaultAsync(x => x.Id == id && x.Role == "Rep");
+        if (user is null) return NotFound();
+        if (await db.Orders.AnyAsync(x => x.SalesRepId == id)) return Conflict(new { message = "Delete this rep's orders first, or use Deactivate to keep their order history." });
+        user.Active = false; user.IsDeleted = true; user.DeletedAt = user.UpdatedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Deactivate(Guid id)
     {

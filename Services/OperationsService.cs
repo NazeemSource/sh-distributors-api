@@ -93,7 +93,7 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
     private async Task<string> NextInvoiceNumber(DateOnly date)
     {
         var prefix="INV-"+date.ToString("ddMMyyyy",CultureInfo.InvariantCulture);
-        var existing=await db.Orders.Where(x=>x.OrderNumber.StartsWith(prefix)).Select(x=>x.OrderNumber).ToListAsync();
+        var existing=await db.Orders.IgnoreQueryFilters().Where(x=>x.OrderNumber.StartsWith(prefix)).Select(x=>x.OrderNumber).ToListAsync();
         var last=existing.Select(number=>int.TryParse(number[prefix.Length..],NumberStyles.None,CultureInfo.InvariantCulture,out var sequence)?sequence:0).DefaultIfEmpty().Max();
         return prefix+(last+1).ToString("D4",CultureInfo.InvariantCulture);
     }
@@ -137,7 +137,6 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
     {
         var order = await db.Orders.Include(x => x.Products).Include(x => x.Payments).SingleOrDefaultAsync(x => x.Id == id)
             ?? throw new BusinessException("not_found", "Order was not found.", 404);
-        if (order.Products.Any(x => x.DeliveredQuantity > 0)) throw new BusinessException("already_delivered", "Delivered orders cannot be deleted.", 409);
         var cheques = await db.Cheques.Where(x => x.OrderId == id).ToListAsync();
         await using var transaction = await BeginTransaction();
         try
@@ -152,6 +151,44 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
             if (transaction is not null) await transaction.CommitAsync();
         }
         catch { if (transaction is not null) await transaction.RollbackAsync(); throw; }
+    }
+
+    public async Task DeleteStockIn(Guid id)
+    {
+        var record = await db.StockIns.Include(x => x.Products).Include(x => x.Payments).SingleOrDefaultAsync(x => x.Id == id)
+            ?? throw new BusinessException("not_found", "Stock In was not found.", 404);
+        await using var transaction = await BeginTransaction();
+        foreach (var line in record.Products)
+            if (await inventory.GetCurrentStock(line.ProductId) < line.Quantity)
+                throw new BusinessException("stock_in_use", "This stock is already sold or reserved. Delete the linked orders or restore stock first.", 409);
+        foreach (var line in record.Products)
+            db.InventoryTransactions.Add(new InventoryTransaction { ProductId = line.ProductId, Type = "STOCK_IN_DELETION", QuantityOut = line.Quantity, ReferenceType = "STOCK_IN", ReferenceId = id, Notes = "Deleted Stock In: " + record.StockInNumber });
+        MarkDeleted(record);
+        foreach (var line in record.Products) MarkDeleted(line);
+        foreach (var payment in record.Payments) MarkDeleted(payment);
+        await db.SaveChangesAsync();
+        if (transaction is not null) await transaction.CommitAsync();
+    }
+
+    public async Task DeleteStockInPayment(Guid id, Guid paymentId)
+    {
+        var record = await db.StockIns.SingleOrDefaultAsync(x => x.Id == id)
+            ?? throw new BusinessException("not_found", "Stock In was not found.", 404);
+        var payment = await db.StockInPayments.SingleOrDefaultAsync(x => x.Id == paymentId && x.StockInId == id)
+            ?? throw new BusinessException("not_found", "Payment was not found.", 404);
+        await using var transaction = await BeginTransaction();
+        MarkDeleted(payment);
+        await db.SaveChangesAsync();
+        await payments.RecalculateStockInPaymentStatus(record);
+        record.UpdatedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
+        if (transaction is not null) await transaction.CommitAsync();
+    }
+
+    private static void MarkDeleted(Entity record)
+    {
+        record.IsDeleted = true;
+        record.DeletedAt = record.UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public async Task<List<Order>> CompleteOrders(CompleteOrdersRequest request)

@@ -75,6 +75,8 @@ public sealed class ChequesController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Delete(Guid id)
     {
         var cheque = await db.Cheques.FindAsync(id) ?? throw new BusinessException("not_found", "Cheque was not found.", 404);
+        if (await db.OrderPayments.AnyAsync(x => x.OrderId == cheque.OrderId && x.Reference == cheque.ChequeNumber && x.Method == "Check"))
+            return Conflict(new { message = "Delete this check payment from its invoice so the outstanding balance is updated." });
         cheque.IsDeleted = true; cheque.DeletedAt = DateTimeOffset.UtcNow; cheque.UpdatedAt = DateTimeOffset.UtcNow; await db.SaveChangesAsync(); return NoContent();
     }
 

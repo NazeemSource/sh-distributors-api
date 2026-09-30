@@ -126,7 +126,8 @@ public sealed class BusinessOperationsTests
         Assert.Equal("PARTIALLY_DELIVERED", second.Status);
         Assert.Equal(3, second.Products.Single().DeliveredQuantity);
         Assert.Equal(new DateOnly(2026, 9, 22), second.DeliveryDate);
-        await Assert.ThrowsAsync<BusinessException>(() => operations.DeleteOrder(first.Id));
+        await operations.DeleteOrder(first.Id);
+        Assert.Equal(24, await inventory.GetCurrentStock(product.Id));
         await operations.CompleteOrders(new CompleteOrdersRequest([second.Id], new DateOnly(2026, 9, 23), [new(product.Id, 3)]));
         Assert.Equal("DELIVERED", second.Status);
         Assert.Equal(6, second.Products.Single().DeliveredQuantity);

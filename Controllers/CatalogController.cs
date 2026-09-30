@@ -19,7 +19,10 @@ public sealed class CatalogController(AppDbContext db, OperationsService operati
     [HttpPut("companies/{id:guid}"),Authorize(Roles="Admin")]
     public async Task<IActionResult> UpdateCompany(Guid id,CompanyRequest r){var x=await db.Companies.FindAsync(id);if(x is null)return NotFound();x.Code=r.Code.Trim();x.Name=r.Name.Trim();x.ContactName=r.ContactName.Trim();x.Phone=r.Phone.Trim();x.Address=r.Address.Trim();x.Active=r.Active;x.UpdatedAt=DateTimeOffset.UtcNow;await db.SaveChangesAsync();return Ok(x);}
     [HttpDelete("companies/{id:guid}"),Authorize(Roles="Admin")]
-    public Task<IActionResult> DeleteCompany(Guid id)=>SoftDelete(db.Companies,id);
+    public async Task<IActionResult> DeleteCompany(Guid id){
+        if(await db.Products.AnyAsync(x=>x.CompanyId==id)||await db.Shops.AnyAsync(x=>x.CompanyId==id)||await db.Users.AnyAsync(x=>x.CompanyId==id)||await db.StockIns.AnyAsync(x=>x.CompanyId==id)||await db.Orders.AnyAsync(x=>x.CompanyId==id))return Conflict(new{message="Delete this company's linked products, shops, reps and invoices first."});
+        return await SoftDelete(db.Companies,id);
+    }
 
     [HttpGet("shops")]
     public async Task<object> Shops([FromQuery]Guid? companyId,[FromQuery]string? search="",[FromQuery]int page=1,[FromQuery]int pageSize=25){var q=db.Shops.AsNoTracking().AsQueryable();if(!User.IsAdmin())q=q.Where(x=>x.CompanyId==User.CompanyId());else if(companyId.HasValue)q=q.Where(x=>x.CompanyId==companyId);if(!string.IsNullOrWhiteSpace(search))q=q.Where(x=>x.Name.Contains(search)||x.Code.Contains(search));return await Page(q.OrderBy(x=>x.Name),page,pageSize);}
@@ -30,7 +33,10 @@ public sealed class CatalogController(AppDbContext db, OperationsService operati
     [HttpPut("shops/{id:guid}"),Authorize(Roles="Admin")]
     public async Task<IActionResult> UpdateShop(Guid id,ShopRequest r){var x=await db.Shops.FindAsync(id);if(x is null)return NotFound();x.CompanyId=r.CompanyId;x.Code=r.Code.Trim();x.Name=r.Name.Trim();x.ContactName=r.ContactName.Trim();x.Phone=r.Phone.Trim();x.Address=r.Address.Trim();x.City=r.City.Trim();x.CreditLimit=r.CreditLimit;x.Active=r.Active;x.UpdatedAt=DateTimeOffset.UtcNow;await db.SaveChangesAsync();return Ok(x);}
     [HttpDelete("shops/{id:guid}"),Authorize(Roles="Admin")]
-    public Task<IActionResult> DeleteShop(Guid id)=>SoftDelete(db.Shops,id);
+    public async Task<IActionResult> DeleteShop(Guid id){
+        if(await db.Orders.AnyAsync(x=>x.ShopId==id)||await db.Cheques.AnyAsync(x=>x.ShopId==id))return Conflict(new{message="Delete this shop's orders and checks first."});
+        return await SoftDelete(db.Shops,id);
+    }
 
     [HttpGet("products")]
     public async Task<object> Products([FromQuery]Guid? companyId,[FromQuery]string? search="",[FromQuery]bool? active=null,[FromQuery]int page=1,[FromQuery]int pageSize=25){var q=db.Products.AsNoTracking().AsQueryable();if(!User.IsAdmin())q=q.Where(x=>x.CompanyId==User.CompanyId());else if(companyId.HasValue)q=q.Where(x=>x.CompanyId==companyId);if(active.HasValue)q=q.Where(x=>x.Active==active);if(!string.IsNullOrWhiteSpace(search))q=q.Where(x=>x.Name.Contains(search)||x.Sku.Contains(search)||x.Barcode.Contains(search));return await Page(q.OrderBy(x=>x.Name),page,pageSize);}
@@ -39,7 +45,10 @@ public sealed class CatalogController(AppDbContext db, OperationsService operati
     [HttpPut("products/{id:guid}"),Authorize(Roles="Admin")]
     public async Task<IActionResult> UpdateProduct(Guid id,ProductRequest r){var x=await db.Products.FindAsync(id);if(x is null)return NotFound();if(r.SellingPrice<0||r.CostPrice<0)return ValidationProblem("Prices cannot be negative.");x.CompanyId=r.CompanyId;x.Sku=r.Sku.Trim();x.Barcode=r.Barcode.Trim();x.Name=r.Name.Trim();x.Category=r.Category.Trim();x.SellingPrice=r.SellingPrice;x.CostPrice=r.CostPrice;x.ReorderLevel=r.ReorderLevel;x.ExpiryDate=r.ExpiryDate;x.Active=r.Active;x.UpdatedAt=DateTimeOffset.UtcNow;await db.SaveChangesAsync();return Ok(x);}
     [HttpDelete("products/{id:guid}"),Authorize(Roles="Admin")]
-    public Task<IActionResult> DeleteProduct(Guid id)=>SoftDelete(db.Products,id);
+    public async Task<IActionResult> DeleteProduct(Guid id){
+        if(await db.OrderProducts.AnyAsync(x=>x.ProductId==id)||await db.StockInProducts.AnyAsync(x=>x.ProductId==id))return Conflict(new{message="Delete the orders and Stock In invoices containing this product first."});
+        return await SoftDelete(db.Products,id);
+    }
     [HttpGet("products/{id:guid}/stock")]
     public async Task<object> Stock(Guid id)=>new{productId=id,currentStock=await inventory.GetCurrentStock(id)};
     [HttpGet("products/{id:guid}/stock-history")]
