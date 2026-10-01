@@ -1,0 +1,46 @@
+name: One-time live data reset
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Preview counts, or apply the backed-up reset
+        required: true
+        type: choice
+        options: [preview, apply]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shdistrapi-production
+  cancel-in-progress: false
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check manifest
+        run: |
+          php -l maintenance/reset_live.php
+          python3 -c 'import json; p=json.load(open("maintenance/products.json")); assert len(p)==178; assert len({x["sku"] for x in p})==178; assert len({x["barcode"] for x in p})==178'
+      - uses: appleboy/scp-action@v1
+        with:
+          host: 198.54.121.31
+          username: cwebsite
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: maintenance
+          target: /home/cwebsite/apps/shdistrapi-maintenance/${{ github.sha }}
+          overwrite: true
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: 198.54.121.31
+          username: cwebsite
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 20m
+          script: |
+            set -eu
+            cd /home/cwebsite/apps/shdistrapi-maintenance/${{ github.sha }}/maintenance
+            bash run.sh '${{ inputs.mode }}'

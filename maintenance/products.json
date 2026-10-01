@@ -1,0 +1,1426 @@
+[
+  {
+    "sku": "LIVE-1-0002",
+    "barcode": "PENDING-1-0002",
+    "name": "KIST MARIE 50G",
+    "category": "KIST BISCUT",
+    "cost": 45,
+    "mrp": 50
+  },
+  {
+    "sku": "LIVE-1-0003",
+    "barcode": "PENDING-1-0003",
+    "name": "KIST CREAMY CHOC 90G",
+    "category": "KIST BISCUT",
+    "cost": 90,
+    "mrp": 100
+  },
+  {
+    "sku": "LIVE-1-0004",
+    "barcode": "PENDING-1-0004",
+    "name": "MAGIC CHOC OH 100G",
+    "category": "KIST BISCUT",
+    "cost": 315,
+    "mrp": 350
+  },
+  {
+    "sku": "LIVE-1-0005",
+    "barcode": "PENDING-1-0005",
+    "name": "MAGIC FINGERS 27G",
+    "category": "KIST BISCUT",
+    "cost": 63,
+    "mrp": 70
+  },
+  {
+    "sku": "LIVE-1-0006",
+    "barcode": "PENDING-1-0006",
+    "name": "MAGIC OLO CREAM CLASSIC 60G",
+    "category": "KIST BISCUT",
+    "cost": 108,
+    "mrp": 120
+  },
+  {
+    "sku": "LIVE-1-0007",
+    "barcode": "PENDING-1-0007",
+    "name": "MAGIC OLO CREAM STAWBERY 60G",
+    "category": "KIST BISCUT",
+    "cost": 108,
+    "mrp": 120
+  },
+  {
+    "sku": "LIVE-1-0008",
+    "barcode": "PENDING-1-0008",
+    "name": "MAGIC OLO CREAM CHOCO 60G",
+    "category": "KIST BISCUT",
+    "cost": 108,
+    "mrp": 120
+  },
+  {
+    "sku": "LIVE-1-0009",
+    "barcode": "PENDING-1-0009",
+    "name": "MAGIC FINGERS 100G",
+    "category": "KIST BISCUT",
+    "cost": 216,
+    "mrp": 240
+  },
+  {
+    "sku": "LIVE-1-0010",
+    "barcode": "PENDING-1-0010",
+    "name": "KIST WAFERS STRAWBERRY 40G",
+    "category": "KIST BISCUT",
+    "cost": 45,
+    "mrp": 50
+  },
+  {
+    "sku": "LIVE-1-0011",
+    "barcode": "PENDING-1-0011",
+    "name": "KIST WAFERS CHOCO 40G",
+    "category": "KIST BISCUT",
+    "cost": 45,
+    "mrp": 50
+  },
+  {
+    "sku": "LIVE-1-0012",
+    "barcode": "PENDING-1-0012",
+    "name": "KIST WAFERS VANILA 40G",
+    "category": "KIST BISCUT",
+    "cost": 45,
+    "mrp": 50
+  },
+  {
+    "sku": "LIVE-1-0013",
+    "barcode": "PENDING-1-0013",
+    "name": "MAGIC CHOOH FUN 40G",
+    "category": "KIST BISCUT",
+    "cost": 99,
+    "mrp": 110
+  },
+  {
+    "sku": "LIVE-1-0014",
+    "barcode": "PENDING-1-0014",
+    "name": "MAGIC CHOOH FUN 100G",
+    "category": "KIST BISCUT",
+    "cost": 216,
+    "mrp": 240
+  },
+  {
+    "sku": "LIVE-1-0015",
+    "barcode": "PENDING-1-0015",
+    "name": "MAGIC CHOKSTIK STRAWBERRY",
+    "category": "KIST BISCUT",
+    "cost": 972,
+    "mrp": 1080
+  },
+  {
+    "sku": "LIVE-1-0016",
+    "barcode": "PENDING-1-0016",
+    "name": "MAGIC CHOKSTIK VANILA",
+    "category": "KIST BISCUT",
+    "cost": 972,
+    "mrp": 1080
+  },
+  {
+    "sku": "LIVE-1-0017",
+    "barcode": "PENDING-1-0017",
+    "name": "MAGIC CHOKSTIK CHOC",
+    "category": "KIST BISCUT",
+    "cost": 972,
+    "mrp": 1080
+  },
+  {
+    "sku": "LIVE-1-0018",
+    "barcode": "PENDING-1-0018",
+    "name": "KIST TEA TIME 300G",
+    "category": "KIST BISCUT",
+    "cost": 441,
+    "mrp": 490
+  },
+  {
+    "sku": "LIVE-1-0019",
+    "barcode": "PENDING-1-0019",
+    "name": "KIST GIFT ASSORTMENT 400G",
+    "category": "KIST BISCUT",
+    "cost": 630,
+    "mrp": 700
+  },
+  {
+    "sku": "LIVE-1-0020",
+    "barcode": "PENDING-1-0020",
+    "name": "APPLE NECTAR 1L",
+    "category": "KIST BISCUT",
+    "cost": 495,
+    "mrp": 550
+  },
+  {
+    "sku": "LIVE-1-0021",
+    "barcode": "PENDING-1-0021",
+    "name": "MANGO NECTAR 1L",
+    "category": "KIST BISCUT",
+    "cost": 495,
+    "mrp": 550
+  },
+  {
+    "sku": "LIVE-1-0022",
+    "barcode": "PENDING-1-0022",
+    "name": "ORRANGE NECTAR 1L",
+    "category": "KIST BISCUT",
+    "cost": 495,
+    "mrp": 550
+  },
+  {
+    "sku": "LIVE-1-0023",
+    "barcode": "PENDING-1-0023",
+    "name": "WOODAPPLE NECTAR 1L",
+    "category": "KIST BISCUT",
+    "cost": 495,
+    "mrp": 550
+  },
+  {
+    "sku": "LIVE-1-0024",
+    "barcode": "PENDING-1-0024",
+    "name": "MIXED FRUIT NECTAR 1L",
+    "category": "KIST BISCUT",
+    "cost": 495,
+    "mrp": 550
+  },
+  {
+    "sku": "LIVE-1-0025",
+    "barcode": "PENDING-1-0025",
+    "name": "MANGO & PASSION NECTAR 1L",
+    "category": "KIST BISCUT",
+    "cost": 495,
+    "mrp": 550
+  },
+  {
+    "sku": "LIVE-1-0026",
+    "barcode": "PENDING-1-0026",
+    "name": "MAGIC CHONKZ 120G",
+    "category": "KIST BISCUT",
+    "cost": 225,
+    "mrp": 250
+  },
+  {
+    "sku": "LIVE-1-0027",
+    "barcode": "PENDING-1-0027",
+    "name": "ALOE VERA NECTAR 1L",
+    "category": "KIST BISCUT",
+    "cost": 495,
+    "mrp": 550
+  },
+  {
+    "sku": "LIVE-1-0028",
+    "barcode": "PENDING-1-0028",
+    "name": "LEMON & MINT NECTAR 1 L",
+    "category": "KIST BISCUT",
+    "cost": 495,
+    "mrp": 550
+  },
+  {
+    "sku": "LIVE-1-0029",
+    "barcode": "PENDING-1-0029",
+    "name": "PASSION FRUIT NECTAR 1L",
+    "category": "KIST BISCUT",
+    "cost": 495,
+    "mrp": 550
+  },
+  {
+    "sku": "LIVE-1-0030",
+    "barcode": "PENDING-1-0030",
+    "name": "APPLE NECTAR 200 ML",
+    "category": "KIST BISCUT",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-1-0031",
+    "barcode": "PENDING-1-0031",
+    "name": "MANGO NECTAR 200 ML",
+    "category": "KIST BISCUT",
+    "cost": 126,
+    "mrp": 140
+  },
+  {
+    "sku": "LIVE-1-0032",
+    "barcode": "PENDING-1-0032",
+    "name": "WOODAPPLE NECTAR 200 ML",
+    "category": "KIST BISCUT",
+    "cost": 126,
+    "mrp": 140
+  },
+  {
+    "sku": "LIVE-1-0033",
+    "barcode": "PENDING-1-0033",
+    "name": "MIXED FRUIT NECTAR 200 ML",
+    "category": "KIST BISCUT",
+    "cost": 126,
+    "mrp": 140
+  },
+  {
+    "sku": "LIVE-1-0034",
+    "barcode": "PENDING-1-0034",
+    "name": "MANGO & PASSION NECTAR 200 ML",
+    "category": "KIST BISCUT",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-1-0035",
+    "barcode": "PENDING-1-0035",
+    "name": "LEMON & MINT NECTAR 200 ML",
+    "category": "KIST BISCUT",
+    "cost": 126,
+    "mrp": 140
+  },
+  {
+    "sku": "LIVE-1-0036",
+    "barcode": "PENDING-1-0036",
+    "name": "ORANGE NECTAR 200 ML",
+    "category": "KIST BISCUT",
+    "cost": 126,
+    "mrp": 140
+  },
+  {
+    "sku": "LIVE-1-0037",
+    "barcode": "PENDING-1-0037",
+    "name": "ALOE VERA NECTAR 200 ML",
+    "category": "KIST BISCUT",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-1-0038",
+    "barcode": "PENDING-1-0038",
+    "name": "APPLE NECTAR 500 ML",
+    "category": "KIST BISCUT",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-1-0039",
+    "barcode": "PENDING-1-0039",
+    "name": "MANGO NECTAR 500 ML",
+    "category": "KIST BISCUT",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-1-0040",
+    "barcode": "PENDING-1-0040",
+    "name": "WOODAPPLE NECTAR 500 ML",
+    "category": "KIST BISCUT",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-1-0041",
+    "barcode": "PENDING-1-0041",
+    "name": "MIXED FRUIT NECTAR 500 ML",
+    "category": "KIST BISCUT",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-1-0042",
+    "barcode": "PENDING-1-0042",
+    "name": "ORANGE NECTAR 500 ML",
+    "category": "KIST BISCUT",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-1-0043",
+    "barcode": "PENDING-1-0043",
+    "name": "ALOE VERA NECTAR 500 ML",
+    "category": "KIST BISCUT",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-1-0044",
+    "barcode": "PENDING-1-0044",
+    "name": "APPLE JUICE TETRA 200 ML",
+    "category": "KIST BISCUT",
+    "cost": 180,
+    "mrp": 200
+  },
+  {
+    "sku": "LIVE-1-0045",
+    "barcode": "PENDING-1-0045",
+    "name": "ORANGE JUICE TETRA 200 ML",
+    "category": "KIST BISCUT",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-1-0046",
+    "barcode": "PENDING-1-0046",
+    "name": "GREEN APPLE JUICE TETRA 200 ML",
+    "category": "KIST BISCUT",
+    "cost": 243,
+    "mrp": 270
+  },
+  {
+    "sku": "LIVE-1-0047",
+    "barcode": "PENDING-1-0047",
+    "name": "GRAPE JUICE TETRA 200 ML",
+    "category": "KIST BISCUT",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-1-0048",
+    "barcode": "PENDING-1-0048",
+    "name": "APPLE JUICE TETRA 1 L",
+    "category": "KIST BISCUT",
+    "cost": 990,
+    "mrp": 1100
+  },
+  {
+    "sku": "LIVE-1-0049",
+    "barcode": "PENDING-1-0049",
+    "name": "ORANGE JUICE TETRA PACK 1 L",
+    "category": "KIST BISCUT",
+    "cost": 1350,
+    "mrp": 1500
+  },
+  {
+    "sku": "LIVE-1-0050",
+    "barcode": "PENDING-1-0050",
+    "name": "GREEN APPLE JUICE TETRA PACK 1 L",
+    "category": "KIST BISCUT",
+    "cost": 1170,
+    "mrp": 1300
+  },
+  {
+    "sku": "LIVE-1-0051",
+    "barcode": "PENDING-1-0051",
+    "name": "GRAPE JUICE TETRA PACK 1 L",
+    "category": "KIST BISCUT",
+    "cost": 1350,
+    "mrp": 1500
+  },
+  {
+    "sku": "LIVE-1-0052",
+    "barcode": "PENDING-1-0052",
+    "name": "100%JUICE RED APPLE 500ML",
+    "category": "KIST BISCUT",
+    "cost": 522,
+    "mrp": 580
+  },
+  {
+    "sku": "LIVE-1-0053",
+    "barcode": "PENDING-1-0053",
+    "name": "100%JUICE ORANGE 500ML",
+    "category": "KIST BISCUT",
+    "cost": 612,
+    "mrp": 680
+  },
+  {
+    "sku": "LIVE-1-0054",
+    "barcode": "PENDING-1-0054",
+    "name": "100%JUICE GREEN APPLE 500ML",
+    "category": "KIST BISCUT",
+    "cost": 612,
+    "mrp": 680
+  },
+  {
+    "sku": "LIVE-1-0055",
+    "barcode": "PENDING-1-0055",
+    "name": "100%JUICE GRAPE 500ML",
+    "category": "KIST BISCUT",
+    "cost": 612,
+    "mrp": 680
+  },
+  {
+    "sku": "LIVE-1-0056",
+    "barcode": "PENDING-1-0056",
+    "name": "RIDE CLASSIC DRINK 250 ML",
+    "category": "KIST BISCUT",
+    "cost": 315,
+    "mrp": 350
+  },
+  {
+    "sku": "LIVE-1-0057",
+    "barcode": "PENDING-1-0057",
+    "name": "RIDE REDBERRY DRINK 250 ML",
+    "category": "KIST BISCUT",
+    "cost": 315,
+    "mrp": 350
+  },
+  {
+    "sku": "LIVE-1-0058",
+    "barcode": "PENDING-1-0058",
+    "name": "RIDE SUGAR FREE DRINK 250 ML",
+    "category": "KIST BISCUT",
+    "cost": 315,
+    "mrp": 350
+  },
+  {
+    "sku": "LIVE-1-0059",
+    "barcode": "PENDING-1-0059",
+    "name": "RIDE CLASSIC DOUBLE PACK",
+    "category": "KIST BISCUT",
+    "cost": 585,
+    "mrp": 650
+  },
+  {
+    "sku": "LIVE-1-0060",
+    "barcode": "PENDING-1-0060",
+    "name": "RIDE GLOW APPLE DRINK 250ML",
+    "category": "KIST BISCUT",
+    "cost": 315,
+    "mrp": 350
+  },
+  {
+    "sku": "LIVE-1-0061",
+    "barcode": "PENDING-1-0061",
+    "name": "RIDE CELEBRATIONS PACK",
+    "category": "KIST BISCUT",
+    "cost": 900,
+    "mrp": 1000
+  },
+  {
+    "sku": "LIVE-1-0062",
+    "barcode": "PENDING-1-0062",
+    "name": "ORRANGE SPARKLING 250ML",
+    "category": "KIST BISCUT",
+    "cost": 162,
+    "mrp": 180
+  },
+  {
+    "sku": "LIVE-1-0063",
+    "barcode": "PENDING-1-0063",
+    "name": "STRAWBERRY SPARKLING 250ML",
+    "category": "KIST BISCUT",
+    "cost": 162,
+    "mrp": 180
+  },
+  {
+    "sku": "LIVE-1-0064",
+    "barcode": "PENDING-1-0064",
+    "name": "GREEN APPLE SPARKLING 250ML",
+    "category": "KIST BISCUT",
+    "cost": 162,
+    "mrp": 180
+  },
+  {
+    "sku": "LIVE-1-0065",
+    "barcode": "PENDING-1-0065",
+    "name": "RIDE CLASSIC S DRINK 250 ML",
+    "category": "KIST BISCUT",
+    "cost": 315,
+    "mrp": 350
+  },
+  {
+    "sku": "LIVE-1-0066",
+    "barcode": "PENDING-1-0066",
+    "name": "CHILLI PASTE 60G",
+    "category": "KIST BISCUT",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-1-0067",
+    "barcode": "PENDING-1-0067",
+    "name": "CHIPS COOKIES 120G",
+    "category": "KIST BISCUT",
+    "cost": 234,
+    "mrp": 260
+  },
+  {
+    "sku": "LIVE-1-0068",
+    "barcode": "PENDING-1-0068",
+    "name": "SOYA SAUCE 4.6 KG",
+    "category": "KIST BISCUT",
+    "cost": 1620,
+    "mrp": 1800
+  },
+  {
+    "sku": "LIVE-1-0069",
+    "barcode": "PENDING-1-0069",
+    "name": "TOMATO SAUCE CATER PACK 4 L",
+    "category": "KIST BISCUT",
+    "cost": 2090,
+    "mrp": 2500
+  },
+  {
+    "sku": "LIVE-1-0070",
+    "barcode": "PENDING-1-0070",
+    "name": "CHIPS COOKIES 65G",
+    "category": "KIST BISCUT",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-1-0071",
+    "barcode": "PENDING-1-0071",
+    "name": "ONION BYTE 30GM",
+    "category": "KIST BISCUT",
+    "cost": 45,
+    "mrp": 50
+  },
+  {
+    "sku": "LIVE-1-0072",
+    "barcode": "PENDING-1-0072",
+    "name": "TOMATO SACHET 15GM - 360",
+    "category": "KIST BISCUT",
+    "cost": 18,
+    "mrp": 20
+  },
+  {
+    "sku": "LIVE-1-0073",
+    "barcode": "PENDING-1-0073",
+    "name": "TOMATO SACHET 9GM - 576",
+    "category": "KIST BISCUT",
+    "cost": 12.5,
+    "mrp": 15
+  },
+  {
+    "sku": "LIVE-1-0074",
+    "barcode": "PENDING-1-0074",
+    "name": "CHOCOLATE CREAM 360GM",
+    "category": "KIST BISCUT",
+    "cost": 324,
+    "mrp": 360
+  },
+  {
+    "sku": "LIVE-1-0075",
+    "barcode": "PENDING-1-0075",
+    "name": "KIST MARIE 200GM",
+    "category": "KIST BISCUT",
+    "cost": 171,
+    "mrp": 190
+  },
+  {
+    "sku": "LIVE-1-0076",
+    "barcode": "PENDING-1-0076",
+    "name": "CREAMY CHOC 210GM",
+    "category": "KIST BISCUT",
+    "cost": 198,
+    "mrp": 220
+  },
+  {
+    "sku": "LIVE-1-0077",
+    "barcode": "PENDING-1-0077",
+    "name": "NICE 430GM",
+    "category": "KIST BISCUT",
+    "cost": 405,
+    "mrp": 450
+  },
+  {
+    "sku": "LIVE-1-0078",
+    "barcode": "PENDING-1-0078",
+    "name": "STRAWBERRY WAFER 360GM*3PCK",
+    "category": "KIST BISCUT",
+    "cost": 423,
+    "mrp": 470
+  },
+  {
+    "sku": "LIVE-1-0079",
+    "barcode": "PENDING-1-0079",
+    "name": "VANILLA WAFER 360GM*3PCK",
+    "category": "KIST BISCUT",
+    "cost": 423,
+    "mrp": 470
+  },
+  {
+    "sku": "LIVE-1-0080",
+    "barcode": "PENDING-1-0080",
+    "name": "KIST WAFERS COFFEE 200G",
+    "category": "KIST BISCUT",
+    "cost": 261,
+    "mrp": 290
+  },
+  {
+    "sku": "LIVE-1-0081",
+    "barcode": "PENDING-1-0081",
+    "name": "KIST WAFERS FALOODA 200G",
+    "category": "KIST BISCUT",
+    "cost": 261,
+    "mrp": 290
+  },
+  {
+    "sku": "LIVE-1-0082",
+    "barcode": "PENDING-1-0082",
+    "name": "KIST WAFERS STRAWBRRY 200G",
+    "category": "KIST BISCUT",
+    "cost": 261,
+    "mrp": 290
+  },
+  {
+    "sku": "LIVE-1-0083",
+    "barcode": "PENDING-1-0083",
+    "name": "KIZZ GINGER BEER 250ML",
+    "category": "KIST BISCUT",
+    "cost": 108,
+    "mrp": 120
+  },
+  {
+    "sku": "LIVE-1-0084",
+    "barcode": "PENDING-1-0084",
+    "name": "KIST WAFERS VANILA 200G",
+    "category": "KIST BISCUT",
+    "cost": 261,
+    "mrp": 290
+  },
+  {
+    "sku": "LIVE-1-0085",
+    "barcode": "PENDING-1-0085",
+    "name": "KIST WAFERS CHOCOLATE 200G",
+    "category": "KIST BISCUT",
+    "cost": 261,
+    "mrp": 290
+  },
+  {
+    "sku": "LIVE-1-0086",
+    "barcode": "PENDING-1-0086",
+    "name": "KIST MIX FRUIT JAM 100G",
+    "category": "KIST BISCUT",
+    "cost": 108,
+    "mrp": 120
+  },
+  {
+    "sku": "LIVE-1-0087",
+    "barcode": "PENDING-1-0087",
+    "name": "KIST CHOK SHORTIES 220G",
+    "category": "KIST BISCUT",
+    "cost": 180,
+    "mrp": 200
+  },
+  {
+    "sku": "LIVE-1-0088",
+    "barcode": "PENDING-1-0088",
+    "name": "KIST MILK SHORTIES 220G",
+    "category": "KIST BISCUT",
+    "cost": 180,
+    "mrp": 200
+  },
+  {
+    "sku": "LIVE-1-0089",
+    "barcode": "PENDING-1-0089",
+    "name": "KIST MARIE 100G",
+    "category": "KIST BISCUT",
+    "cost": 81,
+    "mrp": 90
+  },
+  {
+    "sku": "LIVE-1-0090",
+    "barcode": "PENDING-1-0090",
+    "name": "KIST WAFERS STRAWBERRY 90G",
+    "category": "KIST BISCUT",
+    "cost": 108,
+    "mrp": 120
+  },
+  {
+    "sku": "LIVE-1-0091",
+    "barcode": "PENDING-1-0091",
+    "name": "KIST WAFERS CHOCO 90G",
+    "category": "KIST BISCUT",
+    "cost": 108,
+    "mrp": 120
+  },
+  {
+    "sku": "LIVE-1-0092",
+    "barcode": "PENDING-1-0092",
+    "name": "KIST WAFERS VANILA 90G",
+    "category": "KIST BISCUT",
+    "cost": 108,
+    "mrp": 120
+  },
+  {
+    "sku": "LIVE-1-0093",
+    "barcode": "PENDING-1-0093",
+    "name": "MAGIC OLO CREAM CLASSIC 140G",
+    "category": "KIST BISCUT",
+    "cost": 252,
+    "mrp": 280
+  },
+  {
+    "sku": "LIVE-1-0094",
+    "barcode": "PENDING-1-0094",
+    "name": "MAGIC OLO CREAM STAWBERY 140G",
+    "category": "KIST BISCUT",
+    "cost": 252,
+    "mrp": 280
+  },
+  {
+    "sku": "LIVE-1-0095",
+    "barcode": "PENDING-1-0095",
+    "name": "MAGIC OLO CREAM CHOCO 140G",
+    "category": "KIST BISCUT",
+    "cost": 252,
+    "mrp": 280
+  },
+  {
+    "sku": "LIVE-1-0096",
+    "barcode": "PENDING-1-0096",
+    "name": "LEMON PUFF 200GM",
+    "category": "KIST BISCUT",
+    "cost": 225,
+    "mrp": 250
+  },
+  {
+    "sku": "LIVE-1-0097",
+    "barcode": "PENDING-1-0097",
+    "name": "CHOCOLATE CREAM 500GM",
+    "category": "KIST BISCUT",
+    "cost": 423,
+    "mrp": 470
+  },
+  {
+    "sku": "LIVE-1-0098",
+    "barcode": "PENDING-1-0098",
+    "name": "CHOCOLATE WAFER 360GM*3PCK",
+    "category": "KIST BISCUT",
+    "cost": 423,
+    "mrp": 470
+  },
+  {
+    "sku": "LIVE-1-0099",
+    "barcode": "PENDING-1-0099",
+    "name": "OLO ASSORTMENT 180GM",
+    "category": "KIST BISCUT",
+    "cost": 288,
+    "mrp": 320
+  },
+  {
+    "sku": "LIVE-1-0100",
+    "barcode": "PENDING-1-0100",
+    "name": "KIST MARIE 500G",
+    "category": "KIST BISCUT",
+    "cost": 405,
+    "mrp": 450
+  },
+  {
+    "sku": "LIVE-1-0101",
+    "barcode": "PENDING-1-0101",
+    "name": "KNUCKLES WATER 500 ML",
+    "category": "KIST BISCUT",
+    "cost": 58.5,
+    "mrp": 90
+  },
+  {
+    "sku": "LIVE-1-0102",
+    "barcode": "PENDING-1-0102",
+    "name": "KNUCKLES WATER 1000 ML",
+    "category": "KIST BISCUT",
+    "cost": 91,
+    "mrp": 140
+  },
+  {
+    "sku": "LIVE-1-0103",
+    "barcode": "PENDING-1-0103",
+    "name": "MAGIC CHOCOBLOK CHOCOLAT 160GM",
+    "category": "KIST BISCUT",
+    "cost": 351,
+    "mrp": 390
+  },
+  {
+    "sku": "LIVE-1-0104",
+    "barcode": "PENDING-1-0104",
+    "name": "MAGIC CHOCOBLOK VANILLA 160GM",
+    "category": "KIST BISCUT",
+    "cost": 351,
+    "mrp": 390
+  },
+  {
+    "sku": "LIVE-1-0105",
+    "barcode": "PENDING-1-0105",
+    "name": "MAGIC CHOCOBLOK COFFEE 160GM",
+    "category": "KIST BISCUT",
+    "cost": 351,
+    "mrp": 390
+  },
+  {
+    "sku": "LIVE-1-0106",
+    "barcode": "PENDING-1-0106",
+    "name": "MAGIC CHONKZ 240G",
+    "category": "KIST BISCUT",
+    "cost": 405,
+    "mrp": 450
+  },
+  {
+    "sku": "LIVE-1-0107",
+    "barcode": "PENDING-1-0107",
+    "name": "MAGIC CHOCO TREATS 90G",
+    "category": "KIST BISCUT",
+    "cost": 261,
+    "mrp": 290
+  },
+  {
+    "sku": "LIVE-1-0108",
+    "barcode": "PENDING-1-0108",
+    "name": "KIST CHOCOLATE MARIE 100G",
+    "category": "KIST BISCUT",
+    "cost": 90,
+    "mrp": 100
+  },
+  {
+    "sku": "LIVE-1-0109",
+    "barcode": "PENDING-1-0109",
+    "name": "MAGIC CHOCO NUT 160G",
+    "category": "KIST BISCUT",
+    "cost": 441,
+    "mrp": 490
+  },
+  {
+    "sku": "LIVE-1-0110",
+    "barcode": "PENDING-1-0110",
+    "name": "KIST CREAM CRACKER 500G",
+    "category": "KIST BISCUT",
+    "cost": 432,
+    "mrp": 480
+  },
+  {
+    "sku": "LIVE-1-0112",
+    "barcode": "PENDING-1-0112",
+    "name": "KIST GINGER BISCUITS 250G",
+    "category": "KIST BISCUT",
+    "cost": 216,
+    "mrp": 240
+  },
+  {
+    "sku": "LIVE-1-0113",
+    "barcode": "PENDING-1-0113",
+    "name": "KIST TOMATO SAUCE POUCH 110G",
+    "category": "KIST BISCUT",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-1-0114",
+    "barcode": "PENDING-1-0114",
+    "name": "KIST TOMATO SAUCE POUCH 400G",
+    "category": "KIST BISCUT",
+    "cost": 324,
+    "mrp": 360
+  },
+  {
+    "sku": "LIVE-1-0115",
+    "barcode": "PENDING-1-0115",
+    "name": "KIST TOMATO SAUCE 200G",
+    "category": "KIST BISCUT",
+    "cost": 279,
+    "mrp": 310
+  },
+  {
+    "sku": "LIVE-1-0116",
+    "barcode": "PENDING-1-0116",
+    "name": "KIST TOMATO SAUCE 400G",
+    "category": "KIST BISCUT",
+    "cost": 468,
+    "mrp": 520
+  },
+  {
+    "sku": "LIVE-1-0117",
+    "barcode": "PENDING-1-0117",
+    "name": "COOKIE ASSORTMENT 330G",
+    "category": "KIST BISCUT",
+    "cost": 1395,
+    "mrp": 1550
+  },
+  {
+    "sku": "LIVE-1-0118",
+    "barcode": "PENDING-1-0118",
+    "name": "CHEESE CUTZ 210G",
+    "category": "KIST BISCUT",
+    "cost": 675,
+    "mrp": 750
+  },
+  {
+    "sku": "LIVE-1-0119",
+    "barcode": "PENDING-1-0119",
+    "name": "HIT RIDE",
+    "category": "KIST BISCUT",
+    "cost": 108,
+    "mrp": 120
+  },
+  {
+    "sku": "LIVE-1-0120",
+    "barcode": "PENDING-1-0120",
+    "name": "KNUCKLES WATER 1500 ML",
+    "category": "KIST BISCUT",
+    "cost": 117,
+    "mrp": 180
+  },
+  {
+    "sku": "LIVE-2-0002",
+    "barcode": "PENDING-2-0002",
+    "name": "APPLE NECTAR 1L",
+    "category": "KIST BEVERAGE",
+    "cost": 513,
+    "mrp": 570
+  },
+  {
+    "sku": "LIVE-2-0003",
+    "barcode": "PENDING-2-0003",
+    "name": "MANGO NECTAR 1L",
+    "category": "KIST BEVERAGE",
+    "cost": 513,
+    "mrp": 570
+  },
+  {
+    "sku": "LIVE-2-0004",
+    "barcode": "PENDING-2-0004",
+    "name": "ORRANGE NECTAR 1L",
+    "category": "KIST BEVERAGE",
+    "cost": 513,
+    "mrp": 570
+  },
+  {
+    "sku": "LIVE-2-0005",
+    "barcode": "PENDING-2-0005",
+    "name": "WOODAPPLE NECTAR 1L",
+    "category": "KIST BEVERAGE",
+    "cost": 513,
+    "mrp": 570
+  },
+  {
+    "sku": "LIVE-2-0006",
+    "barcode": "PENDING-2-0006",
+    "name": "MIXED FRUIT NECTAR 1L",
+    "category": "KIST BEVERAGE",
+    "cost": 513,
+    "mrp": 570
+  },
+  {
+    "sku": "LIVE-2-0007",
+    "barcode": "PENDING-2-0007",
+    "name": "MANGO & PASSION NECTAR 1L",
+    "category": "KIST BEVERAGE",
+    "cost": 513,
+    "mrp": 570
+  },
+  {
+    "sku": "LIVE-2-0008",
+    "barcode": "PENDING-2-0008",
+    "name": "ALOE VERA NECTAR 1L",
+    "category": "KIST BEVERAGE",
+    "cost": 513,
+    "mrp": 570
+  },
+  {
+    "sku": "LIVE-2-0009",
+    "barcode": "PENDING-2-0009",
+    "name": "LEMON & MINT NECTAR 1 L",
+    "category": "KIST BEVERAGE",
+    "cost": 513,
+    "mrp": 570
+  },
+  {
+    "sku": "LIVE-2-0010",
+    "barcode": "PENDING-2-0010",
+    "name": "PASSION FRUIT NECTAR 1L",
+    "category": "KIST BEVERAGE",
+    "cost": 513,
+    "mrp": 570
+  },
+  {
+    "sku": "LIVE-2-0011",
+    "barcode": "PENDING-2-0011",
+    "name": "APPLE NECTAR 200 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-2-0012",
+    "barcode": "PENDING-2-0012",
+    "name": "MANGO NECTAR 200 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-2-0013",
+    "barcode": "PENDING-2-0013",
+    "name": "WOODAPPLE NECTAR 200 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-2-0014",
+    "barcode": "PENDING-2-0014",
+    "name": "MIXED FRUIT NECTAR 200 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-2-0015",
+    "barcode": "PENDING-2-0015",
+    "name": "MANGO & PASSION NECTAR 200 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-2-0016",
+    "barcode": "PENDING-2-0016",
+    "name": "LEMON & MINT NECTAR 200 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-2-0017",
+    "barcode": "PENDING-2-0017",
+    "name": "ORANGE NECTAR 200 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-2-0018",
+    "barcode": "PENDING-2-0018",
+    "name": "ALOE VERA NECTAR 200 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-2-0019",
+    "barcode": "PENDING-2-0019",
+    "name": "APPLE NECTAR 500 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-2-0020",
+    "barcode": "PENDING-2-0020",
+    "name": "MANGO NECTAR 500 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-2-0021",
+    "barcode": "PENDING-2-0021",
+    "name": "WOODAPPLE NECTAR 500 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-2-0022",
+    "barcode": "PENDING-2-0022",
+    "name": "MIXED FRUIT NECTAR 500 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-2-0023",
+    "barcode": "PENDING-2-0023",
+    "name": "ORANGE NECTAR 500 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-2-0024",
+    "barcode": "PENDING-2-0024",
+    "name": "ALOE VERA NECTAR 500 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-2-0025",
+    "barcode": "PENDING-2-0025",
+    "name": "APPLE JUICE TETRA 200 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 180,
+    "mrp": 200
+  },
+  {
+    "sku": "LIVE-2-0026",
+    "barcode": "PENDING-2-0026",
+    "name": "ORANGE JUICE TETRA 200 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-2-0027",
+    "barcode": "PENDING-2-0027",
+    "name": "GREEN APPLE JUICE TETRA 200 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 243,
+    "mrp": 270
+  },
+  {
+    "sku": "LIVE-2-0028",
+    "barcode": "PENDING-2-0028",
+    "name": "GRAPE JUICE TETRA 200 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 270,
+    "mrp": 300
+  },
+  {
+    "sku": "LIVE-2-0029",
+    "barcode": "PENDING-2-0029",
+    "name": "APPLE JUICE TETRA 1 L",
+    "category": "KIST BEVERAGE",
+    "cost": 990,
+    "mrp": 1100
+  },
+  {
+    "sku": "LIVE-2-0030",
+    "barcode": "PENDING-2-0030",
+    "name": "ORANGE JUICE TETRA PACK 1 L",
+    "category": "KIST BEVERAGE",
+    "cost": 1350,
+    "mrp": 1500
+  },
+  {
+    "sku": "LIVE-2-0031",
+    "barcode": "PENDING-2-0031",
+    "name": "GREEN APPLE JUICE TETRA PACK 1 L",
+    "category": "KIST BEVERAGE",
+    "cost": 1170,
+    "mrp": 1300
+  },
+  {
+    "sku": "LIVE-2-0032",
+    "barcode": "PENDING-2-0032",
+    "name": "GRAPE JUICE TETRA PACK 1 L",
+    "category": "KIST BEVERAGE",
+    "cost": 1350,
+    "mrp": 1500
+  },
+  {
+    "sku": "LIVE-2-0033",
+    "barcode": "PENDING-2-0033",
+    "name": "100%JUICE RED APPLE 500ML",
+    "category": "KIST BEVERAGE",
+    "cost": 522,
+    "mrp": 580
+  },
+  {
+    "sku": "LIVE-2-0034",
+    "barcode": "PENDING-2-0034",
+    "name": "100%JUICE ORANGE 500ML",
+    "category": "KIST BEVERAGE",
+    "cost": 612,
+    "mrp": 680
+  },
+  {
+    "sku": "LIVE-2-0035",
+    "barcode": "PENDING-2-0035",
+    "name": "100%JUICE GREEN APPLE 500ML",
+    "category": "KIST BEVERAGE",
+    "cost": 612,
+    "mrp": 680
+  },
+  {
+    "sku": "LIVE-2-0036",
+    "barcode": "PENDING-2-0036",
+    "name": "100%JUICE GRAPE 500ML",
+    "category": "KIST BEVERAGE",
+    "cost": 612,
+    "mrp": 680
+  },
+  {
+    "sku": "LIVE-2-0037",
+    "barcode": "PENDING-2-0037",
+    "name": "RIDE CLASSIC DRINK 250 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 315,
+    "mrp": 350
+  },
+  {
+    "sku": "LIVE-2-0038",
+    "barcode": "PENDING-2-0038",
+    "name": "RIDE REDBERRY DRINK 250 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 315,
+    "mrp": 350
+  },
+  {
+    "sku": "LIVE-2-0039",
+    "barcode": "PENDING-2-0039",
+    "name": "RIDE SUGAR FREE DRINK 250 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 315,
+    "mrp": 350
+  },
+  {
+    "sku": "LIVE-2-0040",
+    "barcode": "PENDING-2-0040",
+    "name": "RIDE CLASSIC DOUBLE PACK",
+    "category": "KIST BEVERAGE",
+    "cost": 585,
+    "mrp": 650
+  },
+  {
+    "sku": "LIVE-2-0041",
+    "barcode": "PENDING-2-0041",
+    "name": "RIDE GLOW APPLE DRINK 250ML",
+    "category": "KIST BEVERAGE",
+    "cost": 315,
+    "mrp": 350
+  },
+  {
+    "sku": "LIVE-2-0042",
+    "barcode": "PENDING-2-0042",
+    "name": "RIDE CELEBRATIONS PACK",
+    "category": "KIST BEVERAGE",
+    "cost": 900,
+    "mrp": 1000
+  },
+  {
+    "sku": "LIVE-2-0043",
+    "barcode": "PENDING-2-0043",
+    "name": "ORRANGE SPARKLING 250ML",
+    "category": "KIST BEVERAGE",
+    "cost": 162,
+    "mrp": 180
+  },
+  {
+    "sku": "LIVE-2-0044",
+    "barcode": "PENDING-2-0044",
+    "name": "STRAWBERRY SPARKLING 250ML",
+    "category": "KIST BEVERAGE",
+    "cost": 162,
+    "mrp": 180
+  },
+  {
+    "sku": "LIVE-2-0045",
+    "barcode": "PENDING-2-0045",
+    "name": "GREEN APPLE SPARKLING 250ML",
+    "category": "KIST BEVERAGE",
+    "cost": 162,
+    "mrp": 180
+  },
+  {
+    "sku": "LIVE-2-0046",
+    "barcode": "PENDING-2-0046",
+    "name": "CHILLI PASTE 60G",
+    "category": "KIST BEVERAGE",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-2-0047",
+    "barcode": "PENDING-2-0047",
+    "name": "SOYA SAUCE 4.6 KG",
+    "category": "KIST BEVERAGE",
+    "cost": 1620,
+    "mrp": 1800
+  },
+  {
+    "sku": "LIVE-2-0048",
+    "barcode": "PENDING-2-0048",
+    "name": "TOMATO SAUCE CATER PACK 4 L",
+    "category": "KIST BEVERAGE",
+    "cost": 2090,
+    "mrp": 2500
+  },
+  {
+    "sku": "LIVE-2-0049",
+    "barcode": "PENDING-2-0049",
+    "name": "TOMATO SACHET 15GM - 360",
+    "category": "KIST BEVERAGE",
+    "cost": 18,
+    "mrp": 20
+  },
+  {
+    "sku": "LIVE-2-0050",
+    "barcode": "PENDING-2-0050",
+    "name": "TOMATO SACHET 9GM - 576",
+    "category": "KIST BEVERAGE",
+    "cost": 12.5,
+    "mrp": 15
+  },
+  {
+    "sku": "LIVE-2-0051",
+    "barcode": "PENDING-2-0051",
+    "name": "KIZZ GINGER BEER 250ML",
+    "category": "KIST BEVERAGE",
+    "cost": 108,
+    "mrp": 120
+  },
+  {
+    "sku": "LIVE-2-0052",
+    "barcode": "PENDING-2-0052",
+    "name": "KIST MIX FRUIT JAM 100G",
+    "category": "KIST BEVERAGE",
+    "cost": 108,
+    "mrp": 120
+  },
+  {
+    "sku": "LIVE-2-0053",
+    "barcode": "PENDING-2-0053",
+    "name": "KNUCKLES WATER 500 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 54,
+    "mrp": 80
+  },
+  {
+    "sku": "LIVE-2-0054",
+    "barcode": "PENDING-2-0054",
+    "name": "KNUCKLES WATER 1000 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 96,
+    "mrp": 120
+  },
+  {
+    "sku": "LIVE-2-0055",
+    "barcode": "PENDING-2-0055",
+    "name": "KNUCKLES WATER 1500 ML",
+    "category": "KIST BEVERAGE",
+    "cost": 117,
+    "mrp": 180
+  },
+  {
+    "sku": "LIVE-2-0056",
+    "barcode": "PENDING-2-0056",
+    "name": "KIST TOMATO SAUCE POUCH 110G",
+    "category": "KIST BEVERAGE",
+    "cost": 135,
+    "mrp": 150
+  },
+  {
+    "sku": "LIVE-2-0057",
+    "barcode": "PENDING-2-0057",
+    "name": "KIST TOMATO SAUCE POUCH 400G",
+    "category": "KIST BEVERAGE",
+    "cost": 324,
+    "mrp": 360
+  },
+  {
+    "sku": "LIVE-2-0058",
+    "barcode": "PENDING-2-0058",
+    "name": "KIST TOMATO SAUCE 200G",
+    "category": "KIST BEVERAGE",
+    "cost": 279,
+    "mrp": 310
+  },
+  {
+    "sku": "LIVE-2-0059",
+    "barcode": "PENDING-2-0059",
+    "name": "KIST TOMATO SAUCE 400G",
+    "category": "KIST BEVERAGE",
+    "cost": 468,
+    "mrp": 520
+  },
+  {
+    "sku": "LIVE-2-0060",
+    "barcode": "PENDING-2-0060",
+    "name": "HIT RIDE",
+    "category": "KIST BEVERAGE",
+    "cost": 108,
+    "mrp": 120
+  },
+  {
+    "sku": "LIVE-2-0061",
+    "barcode": "PENDING-2-0061",
+    "name": "KIST MAYONNAISE 200G",
+    "category": "KIST BEVERAGE",
+    "cost": 522,
+    "mrp": 580
+  }
+]
