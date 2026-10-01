@@ -24,7 +24,7 @@ $settings = [
   'ConnectionStrings'=>['Default'=>$connection],
   'Database'=>['UseInMemory'=>false,'UseEnsureCreated'=>true],
   'Jwt'=>['Issuer'=>'Distributor.Api','Audience'=>'Distributor.Apps','Key'=>$jwtKey,'Hours'=>12],
-  'Cors'=>['Origins'=>['https://dist.umigs.com','https://rep.umigs.com']],
+  'Cors'=>['Origins'=>['https://dist.umigs.com','https://www.dist.umigs.com','https://rep.umigs.com','https://www.rep.umigs.com']],
   'Seed'=>['Enabled'=>true,'AdminUsername'=>'admin','AdminName'=>'Administrator - 01','AdminPassword'=>$seedPassword],
   'AllowedHosts'=>'shdistrapi.umigs.com;127.0.0.1;localhost'
 ];

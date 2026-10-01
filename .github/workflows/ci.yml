@@ -48,6 +48,10 @@ jobs:
           pid=$!
           for i in $(seq 1 45); do curl -fsS http://127.0.0.1:5080/health && ready=1 && break; sleep 2; done
           test "${ready:-0}" = 1 || { cat /tmp/shdistrapi.log; exit 1; }
+          for origin in https://dist.umigs.com https://www.dist.umigs.com https://rep.umigs.com https://www.rep.umigs.com; do
+            curl -fsS -D /tmp/cors-headers -o /dev/null -X OPTIONS http://127.0.0.1:5080/api/auth/login -H "Origin: $origin" -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type'
+            grep -Fqi "access-control-allow-origin: $origin" /tmp/cors-headers
+          done
           TEST_ADMIN_PASSWORD=ci-test-1234 node scripts/verify-offline.mjs http://127.0.0.1:5080
           kill "$pid"
       - run: dotnet list package --vulnerable --include-transitive
