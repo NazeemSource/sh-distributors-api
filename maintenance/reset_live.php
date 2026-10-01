@@ -60,7 +60,7 @@ foreach (['host' => $config['host'], 'port' => $config['port'], 'user' => $confi
 file_put_contents($defaults, $optionFile);
 chmod($defaults, 0600);
 try {
-    $command = 'mysqldump --defaults-extra-file='.escapeshellarg($defaults).' --single-transaction --quick --skip-lock-tables --no-tablespaces '.escapeshellarg($database).' --result-file='.escapeshellarg($backup).' 2>&1';
+    $command = 'mysqldump --defaults-extra-file='.escapeshellarg($defaults).' --single-transaction --quick --skip-lock-tables --no-tablespaces --column-statistics=0 '.escapeshellarg($database).' --result-file='.escapeshellarg($backup).' 2>&1';
     exec($command, $output, $exitCode);
     if ($exitCode !== 0 || !is_file($backup) || filesize($backup) < 1000) {
         if (is_file($backup)) unlink($backup);

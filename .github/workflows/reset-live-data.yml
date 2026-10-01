@@ -43,4 +43,4 @@ jobs:
           script: |
             set -eu
             cd /home/cwebsite/apps/shdistrapi-maintenance/${{ github.sha }}/maintenance
-            bash run.sh '${{ inputs.mode }}'
+            bash run.sh '${{ inputs.mode }}' || exit 1

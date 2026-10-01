@@ -35,7 +35,11 @@ restart_api() {
   echo 'API failed to restart'
   return 1
 }
-trap 'restart_api' EXIT
-/usr/local/apps/php84/bin/php reset_live.php apply RESET-LIVE-178
+trap 'status=$?; trap - EXIT; restart_api || status=1; exit "$status"' EXIT
+result="$(/usr/local/apps/php84/bin/php reset_live.php apply RESET-LIVE-178 2>&1)"
+printf '%s\n' "$result"
+case "$result" in *'RESET COMPLETE.'*) ;; *) echo 'Reset did not complete; leaving the database unchanged.'; exit 1;; esac
 cd "$(dirname "$0")"
-/usr/local/apps/php84/bin/php reset_live.php verify
+verification="$(/usr/local/apps/php84/bin/php reset_live.php verify 2>&1)"
+printf '%s\n' "$verification"
+case "$verification" in *VERIFIED*) ;; *) echo 'Post-reset verification failed.'; exit 1;; esac
