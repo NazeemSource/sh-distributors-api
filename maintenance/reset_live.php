@@ -28,19 +28,24 @@ $counts = [];
 foreach ($tables as $table) $counts[$table] = (int)$pdo->query("SELECT COUNT(*) FROM `$table`")->fetchColumn();
 $counts['Reps'] = (int)$pdo->query("SELECT COUNT(*) FROM `Users` WHERE `Role` <> 'Admin'")->fetchColumn();
 $counts['AdminsRetained'] = (int)$pdo->query("SELECT COUNT(*) FROM `Users` WHERE `Role` = 'Admin' AND `IsDeleted` = 0")->fetchColumn();
+$counts['Users'] = (int)$pdo->query('SELECT COUNT(*) FROM `Users`')->fetchColumn();
+$counts['Companies'] = (int)$pdo->query('SELECT COUNT(*) FROM `Companies`')->fetchColumn();
 $companies = $pdo->query("SELECT `Id`, `Code`, `Name` FROM `Companies` WHERE `IsDeleted` = 0")->fetchAll();
 $matches = array_values(array_filter($companies, static fn($c) => strcasecmp(trim($c['Name']), 'KIST') === 0 || strcasecmp(trim($c['Code']), 'KIST') === 0));
+$adminCompanyLinks = count($matches) === 1 ? $pdo->prepare("SELECT COUNT(*) FROM `Users` WHERE `Role` = 'Admin' AND `CompanyId` IS NOT NULL AND `CompanyId` <> ?") : null;
+if ($adminCompanyLinks) $adminCompanyLinks->execute([$matches[0]['Id']]);
+$counts['AdminsLinkedToOtherCompanies'] = $adminCompanyLinks ? (int)$adminCompanyLinks->fetchColumn() : null;
 $preview = ['tables' => $counts, 'companies' => array_map(static fn($c) => ['code' => $c['Code'], 'name' => $c['Name']], $companies), 'kistMatches' => count($matches), 'productsToImport' => count($rows)];
 echo json_encode($preview, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR), PHP_EOL;
 if (($argv[1] ?? '') === 'preview') exit(0);
 if (($argv[1] ?? '') === 'verify') {
-    if ($counts['Products'] !== count($rows) || $counts['AdminsRetained'] < 1 || $counts['Reps'] !== 0) throw new RuntimeException('Post-reset product or user count mismatch.');
+    if ($counts['Products'] !== count($rows) || $counts['AdminsRetained'] !== 1 || $counts['Users'] !== 1 || $counts['Companies'] !== 1 || count($matches) !== 1) throw new RuntimeException('Post-reset product, company, or user count mismatch.');
     foreach ($tables as $table) if ($table !== 'Products' && $counts[$table] !== 0) throw new RuntimeException("Post-reset records remain in $table.");
     echo "VERIFIED\n";
     exit(0);
 }
 if (($argv[1] ?? '') !== 'apply' || ($argv[2] ?? '') !== 'RESET-LIVE-178') throw new RuntimeException('Explicit apply confirmation required.');
-if ($counts['AdminsRetained'] < 1 || count($matches) !== 1) throw new RuntimeException('Expected an active admin and exactly one KIST company. No records changed.');
+if ($counts['AdminsRetained'] !== 1 || count($matches) !== 1 || $counts['AdminsLinkedToOtherCompanies'] !== 0) throw new RuntimeException('Expected exactly one active admin, one KIST company, and no admin linked to another company. No records changed.');
 
 // A complete SQL backup is mandatory. If mysqldump is unavailable or fails, abort.
 $backupDir = $base.'/apps/shdistrapi-shared/backups';
@@ -69,7 +74,10 @@ try {
 $pdo->beginTransaction();
 try {
     foreach ($tables as $table) $pdo->exec("DELETE FROM `$table`");
-    $pdo->exec("DELETE FROM `Users` WHERE `Role` <> 'Admin'");
+    $pdo->exec("DELETE FROM `Users` WHERE `Role` <> 'Admin' OR `IsDeleted` = 1");
+    $pdo->exec('DELETE FROM `BrandingSettings` WHERE `IsDeleted` = 1');
+    $deleteCompanies = $pdo->prepare('DELETE FROM `Companies` WHERE `Id` <> ?');
+    $deleteCompanies->execute([$matches[0]['Id']]);
     $insert = $pdo->prepare('INSERT INTO `Products` (`Id`,`CompanyId`,`Sku`,`Barcode`,`Name`,`Category`,`SellingPrice`,`CostPrice`,`ReorderLevel`,`ExpiryDate`,`Active`,`IsDeleted`,`DeletedAt`,`CreatedAt`,`UpdatedAt`) VALUES (?,?,?,?,?,?,?,?,0,NULL,1,0,NULL,NOW(6),NOW(6))');
     $companyId = $matches[0]['Id'];
     foreach ($rows as $row) {
