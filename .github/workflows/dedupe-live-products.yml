@@ -1,0 +1,44 @@
+name: One-time exact product dedupe
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Preview matching product names and prices, or apply with backup
+        required: true
+        type: choice
+        options: [preview, apply]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shdistrapi-production
+  cancel-in-progress: false
+
+jobs:
+  dedupe:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check maintenance script
+        run: php -l maintenance/dedupe_products.php
+      - uses: appleboy/scp-action@v1
+        with:
+          host: 198.54.121.31
+          username: cwebsite
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: maintenance
+          target: /home/cwebsite/apps/shdistrapi-maintenance/${{ github.sha }}
+          overwrite: true
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: 198.54.121.31
+          username: cwebsite
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 20m
+          script: |
+            set -eu
+            cd /home/cwebsite/apps/shdistrapi-maintenance/${{ github.sha }}/maintenance
+            bash dedupe_run.sh '${{ inputs.mode }}' || exit 1
