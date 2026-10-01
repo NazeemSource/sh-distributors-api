@@ -46,12 +46,14 @@ public sealed class OfflineData(AppDbContext db, InventoryService inventory, Pay
         var shopIds = shops.Select(x => x.Id).ToList();
         var cheques = await db.Cheques.AsNoTracking().Where(x => shopIds.Contains(x.ShopId)).ToListAsync();
         var users = await db.Users.AsNoTracking().Where(x => admin || x.Id == userId).ToListAsync();
+        var adjustmentReasons = admin ? await db.StockAdjustmentReasons.AsNoTracking().OrderBy(x => x.Name).Select(x => x.Name).ToListAsync() : [];
         object Page<T>(List<T> items) => new { items, total = items.Count, page = 1, totalPages = 1 };
         var reads = new Dictionary<string, object> {
             ["/api/auth/me"] = UserView.From(users.Single(x => x.Id == userId)),
             ["/api/companies"] = Page(companies), ["/api/shops"] = Page(shops), ["/api/products"] = Page(products),
             ["/api/orders"] = orders, ["/api/stock-ins"] = stockIns, ["/api/cheques"] = Page(cheques)
         };
+        if (admin) reads["/api/settings/adjustment-reasons"] = adjustmentReasons;
         if (admin) reads["/api/users"] = users.Select(UserView.From).ToList();
         foreach (var p in products) {
             reads[$"/api/products/{p.Id}/stock"] = new { productId = p.Id, currentStock = await inventory.GetCurrentStock(p.Id) };

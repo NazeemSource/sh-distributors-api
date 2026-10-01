@@ -12,6 +12,10 @@ public sealed class SettingsController(AppDbContext db) : ControllerBase
 {
     private const string DefaultName = "SH Distributor";
 
+    [Authorize(Roles = "Admin"), HttpGet("adjustment-reasons")]
+    public async Task<object> AdjustmentReasons() => await db.StockAdjustmentReasons.AsNoTracking()
+        .OrderBy(x => x.Name).Select(x => x.Name).ToListAsync();
+
     [AllowAnonymous, HttpGet("branding")]
     public async Task<IActionResult> Branding()
     {

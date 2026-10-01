@@ -17,6 +17,7 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
             if (db.Database.IsRelational()) await UpgradeLegacySchemaAsync();
         }
         if (db.Database.IsRelational()) await db.Database.ExecuteSqlRawAsync(Distributor.Api.Services.OfflineSyncMiddleware.Schema);
+        await BackfillAdjustmentReasonsAsync();
         if (await db.Users.AnyAsync()) return;
 
         if (!environment.IsDevelopment())
@@ -70,11 +71,36 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
                   CONSTRAINT `PK_BrandingSettings` PRIMARY KEY (`Id`)
                 ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
                 """);
+            await db.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `StockAdjustmentReasons` (
+                  `Id` char(36) NOT NULL,
+                  `Name` varchar(80) NOT NULL,
+                  `IsDeleted` tinyint(1) NOT NULL DEFAULT 0,
+                  `DeletedAt` datetime(6) NULL,
+                  `CreatedAt` datetime(6) NOT NULL,
+                  `UpdatedAt` datetime(6) NOT NULL,
+                  CONSTRAINT `PK_StockAdjustmentReasons` PRIMARY KEY (`Id`),
+                  UNIQUE KEY `IX_StockAdjustmentReasons_Name` (`Name`)
+                ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                """);
         }
         finally
         {
             if (openedHere) await connection.CloseAsync();
         }
+    }
+
+    private async Task BackfillAdjustmentReasonsAsync()
+    {
+        var known = new HashSet<string>(await db.StockAdjustmentReasons.Select(x => x.Name).ToListAsync(), StringComparer.OrdinalIgnoreCase);
+        var notes = await db.InventoryTransactions.AsNoTracking().Where(x => x.Type == "ADJUSTMENT" && x.Notes.StartsWith("Reason: ")).Select(x => x.Notes).ToListAsync();
+        foreach (var note in notes)
+        {
+            var separator = note.IndexOf(" | Date:", StringComparison.Ordinal);
+            var name = (separator >= 0 ? note[8..separator] : note[8..].Split('|', 2)[0]).Trim();
+            if (name.Length is >0 and <=80 && known.Add(name)) db.StockAdjustmentReasons.Add(new StockAdjustmentReason { Name = name });
+        }
+        if (db.ChangeTracker.HasChanges()) await db.SaveChangesAsync();
     }
 
     private static async Task AddColumnIfMissingAsync(System.Data.Common.DbConnection connection, string table, string column, string definition)

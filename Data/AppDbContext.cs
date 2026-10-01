@@ -8,6 +8,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 {
     public DbSet<User> Users => Set<User>();
     public DbSet<BrandingSetting> BrandingSettings => Set<BrandingSetting>();
+    public DbSet<StockAdjustmentReason> StockAdjustmentReasons => Set<StockAdjustmentReason>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<Shop> Shops => Set<Shop>();
     public DbSet<Product> Products => Set<Product>();
@@ -49,6 +50,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         branding.Property(x => x.Name).HasMaxLength(120).IsRequired();
         branding.Property(x => x.LogoDataUrl).HasColumnType("longtext");
         branding.HasQueryFilter(x => !x.IsDeleted);
+
+        var adjustmentReason = modelBuilder.Entity<StockAdjustmentReason>();
+        adjustmentReason.ToTable("StockAdjustmentReasons");
+        adjustmentReason.HasKey(x => x.Id);
+        adjustmentReason.Property(x => x.Id).HasColumnType("char(36)");
+        adjustmentReason.Property(x => x.Name).HasMaxLength(80).IsRequired();
+        adjustmentReason.HasIndex(x => x.Name).IsUnique();
+        adjustmentReason.HasQueryFilter(x => !x.IsDeleted);
 
         ConfigureEntity<Company>(modelBuilder, "Companies");
         ConfigureEntity<Shop>(modelBuilder, "Shops");

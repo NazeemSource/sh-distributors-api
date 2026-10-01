@@ -10,7 +10,7 @@ public sealed record BrandingSettingsRequest(string Name, string LogoDataUrl = "
 public sealed record CompanyRequest(string Code, string Name, string ContactName, string Phone, string Address, bool Active = true);
 public sealed record ShopRequest(Guid CompanyId, string Code, string Name, string ContactName, string Phone, string Address, string City, decimal CreditLimit, bool Active = true);
 public sealed record ProductRequest(Guid CompanyId, string Sku, string Barcode, string Name, string Category, decimal SellingPrice, decimal CostPrice, decimal ReorderLevel, DateOnly? ExpiryDate, decimal OpeningStock = 0, bool Active = true);
-public sealed record StockAdjustmentRequest(decimal Quantity, string Direction, string Notes);
+public sealed record StockAdjustmentRequest(decimal Quantity, string Direction, string Notes, string? Reason = null);
 public sealed record StockInLineRequest(Guid ProductId, decimal Quantity, decimal UnitCost, decimal? UnitPrice = null);
 public sealed record StockInRequest(Guid CompanyId, string StockInNumber, DateOnly StockInDate, string Notes, List<StockInLineRequest> Products);
 public sealed record PaymentRequest(DateOnly PaymentDate, decimal PaidAmount, string Method, string Reference, string? BankName = null, DateOnly? ChequeDate = null);

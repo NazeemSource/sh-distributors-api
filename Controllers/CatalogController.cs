@@ -54,7 +54,16 @@ public sealed class CatalogController(AppDbContext db, OperationsService operati
     [HttpGet("products/{id:guid}/stock-history")]
     public Task<List<InventoryTransaction>> StockHistory(Guid id)=>inventory.GetStockHistory(id);
     [HttpPost("products/{id:guid}/adjustments"),Authorize(Roles="Admin")]
-    public async Task<IActionResult> Adjust(Guid id,StockAdjustmentRequest r){if(!await db.Products.AnyAsync(x=>x.Id==id))return NotFound();var x=await inventory.CreateStockAdjustment(id,r.Quantity,r.Direction,r.Notes);await db.SaveChangesAsync();return Ok(x);}
+    public async Task<IActionResult> Adjust(Guid id,StockAdjustmentRequest r){
+        if(!await db.Products.AnyAsync(x=>x.Id==id))return NotFound();
+        var legacyPrefix=r.Notes?.Split('|',2)[0].Trim();
+        var name=(r.Reason??(legacyPrefix?.StartsWith("Reason: ",StringComparison.OrdinalIgnoreCase)==true?legacyPrefix[8..]:"")).Trim();
+        if(name.Length>80)return ValidationProblem("Adjustment reason must be at most 80 characters.");
+        var x=await inventory.CreateStockAdjustment(id,r.Quantity,r.Direction,r.Notes??"");
+        if(name.Length>0&&!await db.StockAdjustmentReasons.AnyAsync(item=>item.Name==name))
+            db.StockAdjustmentReasons.Add(new StockAdjustmentReason{Name=name});
+        await db.SaveChangesAsync();return Ok(x);
+    }
 
     private async Task<IActionResult> SoftDelete<T>(DbSet<T> set,Guid id) where T:Entity{var x=await set.FindAsync(id);if(x is null)return NotFound();x.IsDeleted=true;x.DeletedAt=DateTimeOffset.UtcNow;x.UpdatedAt=DateTimeOffset.UtcNow;await db.SaveChangesAsync();return NoContent();}
     private static async Task<object> Page<T>(IQueryable<T> query,int page,int pageSize){page=Math.Max(1,page);pageSize=Math.Clamp(pageSize,1,100);var total=await query.CountAsync();return new{items=await query.Skip((page-1)*pageSize).Take(pageSize).ToListAsync(),page,pageSize,total,totalPages=(int)Math.Ceiling(total/(double)pageSize)};}
