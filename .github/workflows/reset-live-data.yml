@@ -7,7 +7,7 @@ on:
         description: Preview counts, or apply the backed-up reset
         required: true
         type: choice
-        options: [preview, apply]
+        options: [preview, apply, dedupe-preview, dedupe-apply]
 
 permissions:
   contents: read
@@ -25,6 +25,7 @@ jobs:
       - name: Check manifest
         run: |
           php -l maintenance/reset_live.php
+          php -l maintenance/dedupe_products.php
           python3 -c 'import json; p=json.load(open("maintenance/products.json")); assert len(p)==178; assert len({x["sku"] for x in p})==178; assert len({x["barcode"] for x in p})==178'
       - uses: appleboy/scp-action@v1
         with:
@@ -43,4 +44,9 @@ jobs:
           script: |
             set -eu
             cd /home/cwebsite/apps/shdistrapi-maintenance/${{ github.sha }}/maintenance
-            bash run.sh '${{ inputs.mode }}' || exit 1
+            case '${{ inputs.mode }}' in
+              dedupe-preview) bash dedupe_run.sh preview ;;
+              dedupe-apply) bash dedupe_run.sh apply ;;
+              preview|apply) bash run.sh '${{ inputs.mode }}' ;;
+              *) exit 1 ;;
+            esac
