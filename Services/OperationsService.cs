@@ -12,13 +12,14 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
 {
     public async Task<Product> CreateProduct(ProductRequest request)
     {
-        if (request.SellingPrice < 0 || request.CostPrice < 0 || request.OpeningStock < 0) throw new BusinessException("validation_error", "Prices and opening stock cannot be negative.");
+        if (request.SellingPrice < 0 || request.CostPrice < 0 || request.OpeningStock < 0 || request.ReorderLevel < 0) throw new BusinessException("validation_error", "Prices, minimum stock, and opening stock cannot be negative.");
         if (!await db.Companies.AnyAsync(x => x.Id == request.CompanyId)) throw new BusinessException("not_found", "Company was not found.", 404);
-        if (await db.Products.AnyAsync(x => x.Barcode == request.Barcode || x.CompanyId == request.CompanyId && x.Sku == request.Sku)) throw new BusinessException("duplicate_product", "SKU or barcode already exists.", 409);
+        var sku=request.Sku.Trim();var barcode=request.Barcode.Trim();
+        if (await db.Products.AnyAsync(x => x.Barcode == barcode || x.CompanyId == request.CompanyId && x.Sku == sku)) throw new BusinessException("duplicate_product", "SKU or barcode already exists.", 409);
         await using var transaction = await BeginTransaction();
         try
         {
-            var product = new Product { CompanyId=request.CompanyId, Sku=request.Sku.Trim(), Barcode=request.Barcode.Trim(), Name=request.Name.Trim(), Category=request.Category.Trim(), SellingPrice=request.SellingPrice, CostPrice=request.CostPrice, ReorderLevel=request.ReorderLevel, ExpiryDate=request.ExpiryDate, Active=request.Active };
+            var product = new Product { CompanyId=request.CompanyId, Sku=sku, Barcode=barcode, Name=request.Name.Trim(), Category=request.Category.Trim(), SellingPrice=request.SellingPrice, CostPrice=request.CostPrice, ReorderLevel=request.ReorderLevel, ExpiryDate=request.ExpiryDate, Active=request.Active };
             db.Products.Add(product);
             await db.SaveChangesAsync();
             await inventory.CreateOpeningStock(product.Id, request.OpeningStock);
@@ -33,7 +34,8 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
     {
         if (request.Products.Count == 0) throw new BusinessException("validation_error", "At least one product is required.");
         if (!await db.Companies.AnyAsync(x => x.Id == request.CompanyId)) throw new BusinessException("not_found", "Company was not found.", 404);
-        if (await db.StockIns.AnyAsync(x => x.StockInNumber == request.StockInNumber)) throw new BusinessException("duplicate_stock_in", "Stock-in number already exists.", 409);
+        var stockInNumber=request.StockInNumber.Trim();
+        if (await db.StockIns.AnyAsync(x => x.StockInNumber == stockInNumber)) throw new BusinessException("duplicate_stock_in", "Stock-in number already exists.", 409);
         if (request.Products.GroupBy(x => x.ProductId).Any(x => x.Count() > 1)) throw new BusinessException("duplicate_product", "A product can appear only once.");
         var products = await db.Products.Where(x => request.Products.Select(y => y.ProductId).Contains(x.Id) && x.CompanyId == request.CompanyId && x.Active).ToDictionaryAsync(x => x.Id);
         if (products.Count != request.Products.Count) throw new BusinessException("invalid_product", "One or more products are invalid.");
@@ -41,7 +43,7 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         await using var transaction = await BeginTransaction();
         try
         {
-            var stockIn = new StockIn { CompanyId=request.CompanyId, StockInNumber=request.StockInNumber.Trim(), StockInDate=request.StockInDate, Notes=request.Notes.Trim(), Products=request.Products.Select(x => new StockInProduct { ProductId=x.ProductId, Quantity=x.Quantity, UnitCost=x.UnitCost, LineTotal=decimal.Round(x.Quantity*x.UnitCost,2) }).ToList() };
+            var stockIn = new StockIn { CompanyId=request.CompanyId, StockInNumber=stockInNumber, StockInDate=request.StockInDate, Notes=request.Notes.Trim(), Products=request.Products.Select(x => new StockInProduct { ProductId=x.ProductId, Quantity=x.Quantity, UnitCost=x.UnitCost, LineTotal=decimal.Round(x.Quantity*x.UnitCost,2) }).ToList() };
             stockIn.StockTotal = stockIn.Products.Sum(x => x.LineTotal);
             db.StockIns.Add(stockIn); inventory.ProcessStockIn(stockIn);
             foreach (var line in request.Products)
