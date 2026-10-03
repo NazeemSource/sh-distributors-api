@@ -61,6 +61,10 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
             await AddColumnIfMissingAsync(connection, "Users", "MonthlyTarget", "decimal(18,2) NOT NULL DEFAULT 0");
             await MakeStockInReferenceOptionalAsync(connection);
             await AddColumnIfMissingAsync(connection, "Shops", "CreatedByRepId", "char(36) NULL");
+            await AddColumnIfMissingAsync(connection, "Products", "Mrp", "decimal(18,2) NULL");
+            await AddColumnIfMissingAsync(connection, "OrderProducts", "Mrp", "decimal(18,2) NULL");
+            await db.Database.ExecuteSqlRawAsync("UPDATE `Products` SET `Mrp` = `SellingPrice` WHERE `Mrp` IS NULL");
+            await db.Database.ExecuteSqlRawAsync("UPDATE `OrderProducts` AS op JOIN `Products` AS p ON op.`ProductId` = p.`Id` SET op.`Mrp` = p.`Mrp` WHERE op.`Mrp` IS NULL");
             await AddShopOwnerIndexIfMissingAsync(connection);
             await AddShopOwnerForeignKeyIfMissingAsync(connection);
             await db.Database.ExecuteSqlRawAsync("""

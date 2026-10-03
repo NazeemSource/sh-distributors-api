@@ -73,6 +73,7 @@ public sealed class Product : Entity
     public string Category { get; set; } = "";
     public decimal SellingPrice { get; set; }
     public decimal CostPrice { get; set; }
+    public decimal? Mrp { get; set; }
     public decimal ReorderLevel { get; set; }
     public DateOnly? ExpiryDate { get; set; }
     public bool Active { get; set; } = true;
@@ -176,6 +177,7 @@ public sealed class OrderProduct : Entity
     public decimal FreeIssueQuantity { get; set; }
     public decimal DeliveredQuantity { get; set; }
     public decimal UnitPrice { get; set; }
+    public decimal? Mrp { get; set; }
     public decimal LineSubtotal { get; set; }
 }
 

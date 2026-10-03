@@ -85,6 +85,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         modelBuilder.Entity<Product>().HasIndex(x => new { x.CompanyId, x.Sku }).IsUnique();
         modelBuilder.Entity<Product>().HasIndex(x => x.Barcode).IsUnique();
         modelBuilder.Entity<Product>().HasIndex(x => x.Name);
+        modelBuilder.Entity<Product>().Property(x => x.Mrp).HasPrecision(18, 2);
         modelBuilder.Entity<Product>().HasOne(x => x.Company).WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<InventoryTransaction>().HasIndex(x => new { x.ProductId, x.TransactionDate });
         modelBuilder.Entity<InventoryTransaction>().HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
@@ -111,6 +112,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         modelBuilder.Entity<Order>().HasOne(x => x.Shop).WithMany().HasForeignKey(x => x.ShopId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Order>().HasOne(x => x.SalesRep).WithMany().HasForeignKey(x => x.SalesRepId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<OrderProduct>().HasIndex(x => new { x.OrderId, x.ProductId }).IsUnique();
+        modelBuilder.Entity<OrderProduct>().Property(x => x.Mrp).HasPrecision(18, 2);
         modelBuilder.Entity<OrderProduct>().HasOne(x => x.Order).WithMany(x => x.Products).HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<OrderProduct>().HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<OrderPayment>().HasOne(x => x.Order).WithMany(x => x.Payments).HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);

@@ -9,6 +9,29 @@ namespace API.Tests;
 public sealed class BusinessOperationsTests
 {
     [Fact]
+    public async Task Mrp_is_separate_from_unit_price_and_snapshotted_on_new_invoices()
+    {
+        await using var db=CreateDb();
+        var company=new Company { Code="MRP-CO", Name="MRP company" };
+        var shop=new Shop { CompanyId=company.Id, Code="MRP-SHOP", Name="MRP shop" };
+        var rep=new User { CompanyId=company.Id, Name="MRP rep", Username="mrp-rep", PasswordHash="hash", Role="Rep" };
+        db.AddRange(company,shop,rep);await db.SaveChangesAsync();
+        var operations=new OperationsService(db,new InventoryService(db),new PaymentService(db));
+        var product=await operations.CreateProduct(new ProductRequest(company.Id,"MRP-SKU","90000009","MRP product","General",100,70,1,null,10,true,140));
+        var date=new DateOnly(2026,10,3);
+        OrderRequest Request(string number)=>new(shop.Id,rep.Id,number,date,date,"","",[new(product.Id,1,0,100)]);
+        var first=await operations.CreateOrder(Request("MRP-ORDER-1"));
+        Assert.Equal(100,first.OrderTotal);
+        Assert.Equal(100,first.Products.Single().UnitPrice);
+        Assert.Equal(140,first.Products.Single().Mrp);
+        product.Mrp=160;await db.SaveChangesAsync();
+        var second=await operations.CreateOrder(Request("MRP-ORDER-2"));
+        Assert.Equal(140,first.Products.Single().Mrp);
+        Assert.Equal(160,second.Products.Single().Mrp);
+        Assert.Equal(100,second.OrderTotal);
+    }
+
+    [Fact]
     public async Task Stock_in_updates_unit_cost_and_selling_price()
     {
         await using var db=CreateDb();
@@ -16,10 +39,11 @@ public sealed class BusinessOperationsTests
         db.Companies.Add(company);await db.SaveChangesAsync();
         var operations=new OperationsService(db,new InventoryService(db),new PaymentService(db));
         var product=await operations.CreateProduct(new ProductRequest(company.Id,"PRICE-SKU","90000002","Price product","General",100,70,1,null,0));
-        var stockIn=await operations.CreateStockIn(new StockInRequest(company.Id,"GRN-PRICE",new DateOnly(2026,9,27),"",[new(product.Id,3,80,120)]));
+        var stockIn=await operations.CreateStockIn(new StockInRequest(company.Id,"GRN-PRICE",new DateOnly(2026,9,27),"",[new(product.Id,3,80,120,150)]));
         await db.Entry(product).ReloadAsync();
         Assert.Equal(80,product.CostPrice);
         Assert.Equal(120,product.SellingPrice);
+        Assert.Equal(150,product.Mrp);
         Assert.Equal(3,await new InventoryService(db).GetCurrentStock(product.Id));
         await operations.AddStockInPayment(stockIn.Id,new PaymentRequest(new DateOnly(2026,9,27),100,"Cash","RECEIPT-1"));
         var controller=new Distributor.Api.Controllers.OperationsController(db,operations,new PaymentService(db));

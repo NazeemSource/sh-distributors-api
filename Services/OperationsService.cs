@@ -12,14 +12,14 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
 {
     public async Task<Product> CreateProduct(ProductRequest request)
     {
-        if (request.SellingPrice < 0 || request.CostPrice < 0 || request.OpeningStock < 0 || request.ReorderLevel < 0) throw new BusinessException("validation_error", "Prices, minimum stock, and opening stock cannot be negative.");
+        if (request.SellingPrice < 0 || request.CostPrice < 0 || request.Mrp < 0 || request.OpeningStock < 0 || request.ReorderLevel < 0) throw new BusinessException("validation_error", "Prices, minimum stock, and opening stock cannot be negative.");
         if (!await db.Companies.AnyAsync(x => x.Id == request.CompanyId)) throw new BusinessException("not_found", "Company was not found.", 404);
         var sku=request.Sku.Trim();var barcode=request.Barcode.Trim();
         if (await db.Products.AnyAsync(x => x.Barcode == barcode || x.CompanyId == request.CompanyId && x.Sku == sku)) throw new BusinessException("duplicate_product", "SKU or barcode already exists.", 409);
         await using var transaction = await BeginTransaction();
         try
         {
-            var product = new Product { CompanyId=request.CompanyId, Sku=sku, Barcode=barcode, Name=request.Name.Trim(), Category=request.Category.Trim(), SellingPrice=request.SellingPrice, CostPrice=request.CostPrice, ReorderLevel=request.ReorderLevel, ExpiryDate=request.ExpiryDate, Active=request.Active };
+            var product = new Product { CompanyId=request.CompanyId, Sku=sku, Barcode=barcode, Name=request.Name.Trim(), Category=request.Category.Trim(), SellingPrice=request.SellingPrice, CostPrice=request.CostPrice, Mrp=request.Mrp??request.SellingPrice, ReorderLevel=request.ReorderLevel, ExpiryDate=request.ExpiryDate, Active=request.Active };
             db.Products.Add(product);
             await db.SaveChangesAsync();
             await inventory.CreateOpeningStock(product.Id, request.OpeningStock);
@@ -40,7 +40,7 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         if (request.Products.GroupBy(x => x.ProductId).Any(x => x.Count() > 1)) throw new BusinessException("duplicate_product", "A product can appear only once.");
         var products = await db.Products.Where(x => request.Products.Select(y => y.ProductId).Contains(x.Id) && x.CompanyId == request.CompanyId && x.Active).ToDictionaryAsync(x => x.Id);
         if (products.Count != request.Products.Count) throw new BusinessException("invalid_product", "One or more products are invalid.");
-        if (request.Products.Any(x => x.Quantity <= 0 || x.UnitCost < 0 || x.UnitPrice < 0)) throw new BusinessException("validation_error", "Quantities must be positive and prices cannot be negative.");
+        if (request.Products.Any(x => x.Quantity <= 0 || x.UnitCost < 0 || x.UnitPrice < 0 || x.Mrp < 0)) throw new BusinessException("validation_error", "Quantities must be positive and prices cannot be negative.");
         await using var transaction = await BeginTransaction();
         try
         {
@@ -52,6 +52,7 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
                 var product = products[line.ProductId];
                 product.CostPrice = line.UnitCost;
                 if (line.UnitPrice.HasValue) product.SellingPrice = line.UnitPrice.Value;
+                if (line.Mrp.HasValue) product.Mrp = line.Mrp.Value;
                 product.UpdatedAt = DateTimeOffset.UtcNow;
             }
             await db.SaveChangesAsync();
@@ -83,7 +84,7 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         try
         {
             var orderNumber=numberedInvoice?await NextInvoiceNumber(request.OrderDate):requestedNumber;
-            var order = new Order { CompanyId=shop.CompanyId, ShopId=shop.Id, SalesRepId=rep.Id, OrderNumber=orderNumber, OrderDate=request.OrderDate, DeliveryDate=request.DeliveryDate, DeliveryAddress=request.DeliveryAddress.Trim(), Notes=request.Notes.Trim(), Products=request.Products.Select(x => new OrderProduct { ProductId=x.ProductId, Quantity=x.Quantity, FreeIssueQuantity=x.FreeIssueQuantity, UnitPrice=x.UnitPrice, LineSubtotal=decimal.Round(x.Quantity*x.UnitPrice,2) }).ToList() };
+            var order = new Order { CompanyId=shop.CompanyId, ShopId=shop.Id, SalesRepId=rep.Id, OrderNumber=orderNumber, OrderDate=request.OrderDate, DeliveryDate=request.DeliveryDate, DeliveryAddress=request.DeliveryAddress.Trim(), Notes=request.Notes.Trim(), Products=request.Products.Select(x => new OrderProduct { ProductId=x.ProductId, Quantity=x.Quantity, FreeIssueQuantity=x.FreeIssueQuantity, UnitPrice=x.UnitPrice, Mrp=products[x.ProductId].Mrp??products[x.ProductId].SellingPrice, LineSubtotal=decimal.Round(x.Quantity*x.UnitPrice,2) }).ToList() };
             order.OrderTotal = order.Products.Sum(x => x.LineSubtotal);
             db.Orders.Add(order); inventory.ProcessOrderStock(order);
             await db.SaveChangesAsync();
@@ -128,7 +129,7 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
             inventory.ReverseOrderStock(order);
             db.OrderProducts.RemoveRange(order.Products);
             order.CompanyId=shop.CompanyId;order.ShopId=shop.Id;order.SalesRepId=rep.Id;order.OrderNumber=request.OrderNumber.Trim();order.OrderDate=request.OrderDate;order.DeliveryDate=request.DeliveryDate;order.DeliveryAddress=request.DeliveryAddress.Trim();order.Notes=request.Notes.Trim();
-            order.Products=request.Products.Select(x=>new OrderProduct { ProductId=x.ProductId,Quantity=x.Quantity,FreeIssueQuantity=x.FreeIssueQuantity,UnitPrice=x.UnitPrice,LineSubtotal=decimal.Round(x.Quantity*x.UnitPrice,2) }).ToList();
+            order.Products=request.Products.Select(x=>new OrderProduct { ProductId=x.ProductId,Quantity=x.Quantity,FreeIssueQuantity=x.FreeIssueQuantity,UnitPrice=x.UnitPrice,Mrp=products[x.ProductId].Mrp??products[x.ProductId].SellingPrice,LineSubtotal=decimal.Round(x.Quantity*x.UnitPrice,2) }).ToList();
             order.OrderTotal=newTotal;inventory.ProcessOrderStock(order);
             await db.SaveChangesAsync();await payments.RecalculateOrderPaymentStatus(order);await db.SaveChangesAsync();
             if(transaction is not null)await transaction.CommitAsync();return order;
