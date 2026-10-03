@@ -80,6 +80,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         modelBuilder.Entity<Shop>().HasIndex(x => new { x.CompanyId, x.Code }).IsUnique();
         modelBuilder.Entity<Shop>().HasIndex(x => x.Name);
         modelBuilder.Entity<Shop>().HasOne(x => x.Company).WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Shop>().HasIndex(x => x.CreatedByRepId);
+        modelBuilder.Entity<Shop>().HasOne(x => x.CreatedByRep).WithMany().HasForeignKey(x => x.CreatedByRepId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Product>().HasIndex(x => new { x.CompanyId, x.Sku }).IsUnique();
         modelBuilder.Entity<Product>().HasIndex(x => x.Barcode).IsUnique();
         modelBuilder.Entity<Product>().HasIndex(x => x.Name);

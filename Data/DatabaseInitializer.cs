@@ -60,6 +60,9 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
             await AddColumnIfMissingAsync(connection, "Users", "Email", "varchar(180) NOT NULL DEFAULT ''");
             await AddColumnIfMissingAsync(connection, "Users", "MonthlyTarget", "decimal(18,2) NOT NULL DEFAULT 0");
             await MakeStockInReferenceOptionalAsync(connection);
+            await AddColumnIfMissingAsync(connection, "Shops", "CreatedByRepId", "char(36) NULL");
+            await AddShopOwnerIndexIfMissingAsync(connection);
+            await AddShopOwnerForeignKeyIfMissingAsync(connection);
             await db.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `BrandingSettings` (
                   `Id` char(36) NOT NULL,
@@ -157,6 +160,26 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
         if (string.Equals((string?)await check.ExecuteScalarAsync(), "YES", StringComparison.OrdinalIgnoreCase)) return;
         await using var alter = connection.CreateCommand();
         alter.CommandText = "ALTER TABLE `StockIns` MODIFY COLUMN `StockInNumber` varchar(255) NULL";
+        await alter.ExecuteNonQueryAsync();
+    }
+
+    private static async Task AddShopOwnerIndexIfMissingAsync(System.Data.Common.DbConnection connection)
+    {
+        await using var check = connection.CreateCommand();
+        check.CommandText = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Shops' AND INDEX_NAME = 'IX_Shops_CreatedByRepId'";
+        if (Convert.ToInt64(await check.ExecuteScalarAsync()) > 0) return;
+        await using var alter = connection.CreateCommand();
+        alter.CommandText = "CREATE INDEX `IX_Shops_CreatedByRepId` ON `Shops` (`CreatedByRepId`)";
+        await alter.ExecuteNonQueryAsync();
+    }
+
+    private static async Task AddShopOwnerForeignKeyIfMissingAsync(System.Data.Common.DbConnection connection)
+    {
+        await using var check = connection.CreateCommand();
+        check.CommandText = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Shops' AND CONSTRAINT_NAME = 'FK_Shops_Users_CreatedByRepId'";
+        if (Convert.ToInt64(await check.ExecuteScalarAsync()) > 0) return;
+        await using var alter = connection.CreateCommand();
+        alter.CommandText = "ALTER TABLE `Shops` ADD CONSTRAINT `FK_Shops_Users_CreatedByRepId` FOREIGN KEY (`CreatedByRepId`) REFERENCES `Users` (`Id`) ON DELETE RESTRICT";
         await alter.ExecuteNonQueryAsync();
     }
 

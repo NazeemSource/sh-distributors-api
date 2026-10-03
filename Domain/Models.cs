@@ -51,6 +51,8 @@ public sealed class Shop : Entity
 {
     public Guid CompanyId { get; set; }
     public Company? Company { get; set; }
+    public Guid? CreatedByRepId { get; set; }
+    public User? CreatedByRep { get; set; }
     public required string Code { get; set; }
     public required string Name { get; set; }
     public string ContactName { get; set; } = "";

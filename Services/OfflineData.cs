@@ -41,7 +41,7 @@ public sealed class OfflineData(AppDbContext db, InventoryService inventory, Pay
     {
         var admin = user.IsAdmin(); var companyId = user.CompanyId(); var userId = user.UserId();
         var companies = await db.Companies.AsNoTracking().Where(x => admin || x.Id == companyId).OrderBy(x => x.Name).ToListAsync();
-        var shops = await db.Shops.AsNoTracking().Where(x => admin || x.CompanyId == companyId).OrderBy(x => x.Name).ToListAsync();
+        var shops = await db.Shops.AsNoTracking().Where(x => admin || x.CompanyId == companyId && (x.CreatedByRepId == null || x.CreatedByRepId == userId)).OrderBy(x => x.Name).ToListAsync();
         var products = await db.Products.AsNoTracking().Where(x => admin || x.CompanyId == companyId).OrderBy(x => x.Name).ToListAsync();
         var orders = await db.Orders.AsNoTracking().Where(x => admin || x.SalesRepId == userId).Include(x => x.Products).Include(x => x.Payments).OrderByDescending(x => x.OrderDate).ToListAsync();
         var stockIns = admin ? await db.StockIns.AsNoTracking().Include(x => x.Products).Include(x => x.Payments).OrderByDescending(x => x.StockInDate).ToListAsync() : [];

@@ -26,11 +26,11 @@ public sealed class OperationsController(AppDbContext db,OperationsService opera
     public async Task<object>CompanyOutstanding(Guid id)=>new{companyId=id,outstanding=await payments.GetCompanyOutstanding(id),stockIns=await payments.GetCompanyOutstandingStockIns(id)};
 
     [HttpPost("orders")]
-    public async Task<IActionResult>CreateOrder(OrderRequest r){if(!User.IsAdmin()&&r.SalesRepId!=User.UserId())return Forbid();var x=await operations.CreateOrder(r);return Created($"/api/orders/{x.Id}",View(x));}
+    public async Task<IActionResult>CreateOrder(OrderRequest r){if(!User.IsAdmin()){if(r.SalesRepId!=User.UserId())return Forbid();if(!await db.Shops.AnyAsync(x=>x.Id==r.ShopId&&x.CompanyId==User.CompanyId()&&(x.CreatedByRepId==null||x.CreatedByRepId==User.UserId())))return NotFound();}var x=await operations.CreateOrder(r);return Created($"/api/orders/{x.Id}",View(x));}
     [HttpPost("orders/complete"),Authorize(Roles="Admin")]
     public async Task<IActionResult>CompleteOrders(CompleteOrdersRequest r){var completed=await operations.CompleteOrders(r);return Ok(completed.Select(View).ToList());}
     [HttpPut("orders/{id:guid}")]
-    public async Task<IActionResult>UpdateOrder(Guid id,OrderRequest r){if(!User.IsAdmin()){var userId=User.UserId();if(r.SalesRepId!=userId||!await db.Orders.AnyAsync(x=>x.Id==id&&x.SalesRepId==userId))return Forbid();}var x=await operations.UpdateOrder(id,r);return Ok(View(x));}
+    public async Task<IActionResult>UpdateOrder(Guid id,OrderRequest r){if(!User.IsAdmin()){var userId=User.UserId();if(r.SalesRepId!=userId||!await db.Orders.AnyAsync(x=>x.Id==id&&x.SalesRepId==userId))return Forbid();if(!await db.Shops.AnyAsync(x=>x.Id==r.ShopId&&x.CompanyId==User.CompanyId()&&(x.CreatedByRepId==null||x.CreatedByRepId==userId)))return NotFound();}var x=await operations.UpdateOrder(id,r);return Ok(View(x));}
     [HttpDelete("orders/{id:guid}"),Authorize(Roles="Admin")]
     public async Task<IActionResult>DeleteOrder(Guid id){await operations.DeleteOrder(id);return NoContent();}
     [HttpGet("orders")]
