@@ -20,7 +20,7 @@ public sealed class CatalogController(AppDbContext db, OperationsService operati
     public async Task<IActionResult> UpdateCompany(Guid id,CompanyRequest r){var x=await db.Companies.FindAsync(id);if(x is null)return NotFound();var code=r.Code.Trim();if(await db.Companies.AnyAsync(other=>other.Id!=id&&other.Code==code))return Conflict(new{error="duplicate_company",message="Company code is already in use."});x.Code=code;x.Name=r.Name.Trim();x.ContactName=r.ContactName.Trim();x.Phone=r.Phone.Trim();x.Address=r.Address.Trim();x.Active=r.Active;x.UpdatedAt=DateTimeOffset.UtcNow;await db.SaveChangesAsync();return Ok(x);}
     [HttpDelete("companies/{id:guid}"),Authorize(Roles="Admin")]
     public async Task<IActionResult> DeleteCompany(Guid id){
-        if(await db.Products.AnyAsync(x=>x.CompanyId==id)||await db.Shops.AnyAsync(x=>x.CompanyId==id)||await db.Users.AnyAsync(x=>x.CompanyId==id)||await db.StockIns.AnyAsync(x=>x.CompanyId==id)||await db.Orders.AnyAsync(x=>x.CompanyId==id))return Conflict(new{message="Delete this company's linked products, shops, reps and invoices first."});
+        if(await db.Products.AnyAsync(x=>x.CompanyId==id)||await db.Shops.AnyAsync(x=>x.CompanyId==id)||await db.Users.AnyAsync(x=>x.CompanyId==id)||await db.StockIns.AnyAsync(x=>x.CompanyId==id)||await db.Orders.AnyAsync(x=>x.CompanyId==id)||await db.DepositAccounts.AnyAsync(x=>x.CompanyId==id))return Conflict(new{message="Delete this company's linked products, shops, reps and accounts first."});
         return await SoftDelete(db.Companies,id);
     }
 

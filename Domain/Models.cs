@@ -123,6 +123,27 @@ public sealed class StockInPayment : Entity
     public string Reference { get; set; } = "";
 }
 
+public sealed class DepositAccount : Entity
+{
+    public Guid CompanyId { get; set; }
+    public Company? Company { get; set; }
+    public DateOnly Date { get; set; }
+    public required string Type { get; set; }
+    public required string Account { get; set; }
+    public decimal Total { get; set; }
+    public List<DepositAccountPayment> Payments { get; set; } = [];
+}
+
+public sealed class DepositAccountPayment : Entity
+{
+    public Guid DepositAccountId { get; set; }
+    public DepositAccount? DepositAccount { get; set; }
+    public DateOnly PaymentDate { get; set; }
+    public decimal Amount { get; set; }
+    public required string Method { get; set; }
+    public string Reference { get; set; } = "";
+}
+
 public sealed class Order : Entity
 {
     public Guid CompanyId { get; set; }

@@ -83,6 +83,40 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
                   UNIQUE KEY `IX_StockAdjustmentReasons_Name` (`Name`)
                 ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
                 """);
+            await db.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `DepositAccounts` (
+                  `Id` char(36) NOT NULL,
+                  `CompanyId` char(36) NOT NULL,
+                  `Date` date NOT NULL,
+                  `Type` varchar(30) NOT NULL,
+                  `Account` varchar(160) NOT NULL,
+                  `Total` decimal(18,2) NOT NULL,
+                  `IsDeleted` tinyint(1) NOT NULL DEFAULT 0,
+                  `DeletedAt` datetime(6) NULL,
+                  `CreatedAt` datetime(6) NOT NULL,
+                  `UpdatedAt` datetime(6) NOT NULL,
+                  CONSTRAINT `PK_DepositAccounts` PRIMARY KEY (`Id`),
+                  CONSTRAINT `FK_DepositAccounts_Companies_CompanyId` FOREIGN KEY (`CompanyId`) REFERENCES `Companies` (`Id`) ON DELETE RESTRICT,
+                  KEY `IX_DepositAccounts_CompanyId_Date` (`CompanyId`, `Date`)
+                ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                """);
+            await db.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `DepositAccountPayments` (
+                  `Id` char(36) NOT NULL,
+                  `DepositAccountId` char(36) NOT NULL,
+                  `PaymentDate` date NOT NULL,
+                  `Amount` decimal(18,2) NOT NULL,
+                  `Method` varchar(40) NOT NULL,
+                  `Reference` varchar(120) NOT NULL,
+                  `IsDeleted` tinyint(1) NOT NULL DEFAULT 0,
+                  `DeletedAt` datetime(6) NULL,
+                  `CreatedAt` datetime(6) NOT NULL,
+                  `UpdatedAt` datetime(6) NOT NULL,
+                  CONSTRAINT `PK_DepositAccountPayments` PRIMARY KEY (`Id`),
+                  CONSTRAINT `FK_DepositAccountPayments_DepositAccounts_DepositAccountId` FOREIGN KEY (`DepositAccountId`) REFERENCES `DepositAccounts` (`Id`) ON DELETE RESTRICT,
+                  KEY `IX_DepositAccountPayments_DepositAccountId` (`DepositAccountId`)
+                ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                """);
         }
         finally
         {

@@ -16,6 +16,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<StockIn> StockIns => Set<StockIn>();
     public DbSet<StockInProduct> StockInProducts => Set<StockInProduct>();
     public DbSet<StockInPayment> StockInPayments => Set<StockInPayment>();
+    public DbSet<DepositAccount> DepositAccounts => Set<DepositAccount>();
+    public DbSet<DepositAccountPayment> DepositAccountPayments => Set<DepositAccountPayment>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderProduct> OrderProducts => Set<OrderProduct>();
     public DbSet<OrderPayment> OrderPayments => Set<OrderPayment>();
@@ -66,6 +68,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         ConfigureEntity<StockIn>(modelBuilder, "StockIns");
         ConfigureEntity<StockInProduct>(modelBuilder, "StockInProducts");
         ConfigureEntity<StockInPayment>(modelBuilder, "StockInPayments");
+        ConfigureEntity<DepositAccount>(modelBuilder, "DepositAccounts");
+        ConfigureEntity<DepositAccountPayment>(modelBuilder, "DepositAccountPayments");
         ConfigureEntity<Order>(modelBuilder, "Orders");
         ConfigureEntity<OrderProduct>(modelBuilder, "OrderProducts");
         ConfigureEntity<OrderPayment>(modelBuilder, "OrderPayments");
@@ -90,6 +94,13 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         modelBuilder.Entity<StockInProduct>().HasOne(x => x.StockIn).WithMany(x => x.Products).HasForeignKey(x => x.StockInId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<StockInProduct>().HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<StockInPayment>().HasOne(x => x.StockIn).WithMany(x => x.Payments).HasForeignKey(x => x.StockInId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<DepositAccount>().Property(x => x.Type).HasMaxLength(30).IsRequired();
+        modelBuilder.Entity<DepositAccount>().Property(x => x.Account).HasMaxLength(160).IsRequired();
+        modelBuilder.Entity<DepositAccount>().HasIndex(x => new { x.CompanyId, x.Date });
+        modelBuilder.Entity<DepositAccount>().HasOne(x => x.Company).WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<DepositAccountPayment>().Property(x => x.Method).HasMaxLength(40).IsRequired();
+        modelBuilder.Entity<DepositAccountPayment>().Property(x => x.Reference).HasMaxLength(120);
+        modelBuilder.Entity<DepositAccountPayment>().HasOne(x => x.DepositAccount).WithMany(x => x.Payments).HasForeignKey(x => x.DepositAccountId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Order>().HasIndex(x => x.OrderNumber).IsUnique();
         modelBuilder.Entity<Order>().HasIndex(x => new { x.ShopId, x.OrderDate });
         modelBuilder.Entity<Order>().HasIndex(x => new { x.SalesRepId, x.OrderDate });
