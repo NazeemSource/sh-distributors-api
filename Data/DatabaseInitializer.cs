@@ -59,6 +59,7 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
             await AddColumnIfMissingAsync(connection, "Users", "Phone", "varchar(40) NOT NULL DEFAULT ''");
             await AddColumnIfMissingAsync(connection, "Users", "Email", "varchar(180) NOT NULL DEFAULT ''");
             await AddColumnIfMissingAsync(connection, "Users", "MonthlyTarget", "decimal(18,2) NOT NULL DEFAULT 0");
+            await MakeStockInReferenceOptionalAsync(connection);
             await db.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `BrandingSettings` (
                   `Id` char(36) NOT NULL,
@@ -146,6 +147,16 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
         if (Convert.ToInt64(await check.ExecuteScalarAsync()) > 0) return;
         await using var alter = connection.CreateCommand();
         alter.CommandText = $"ALTER TABLE `{table}` ADD COLUMN `{column}` {definition}";
+        await alter.ExecuteNonQueryAsync();
+    }
+
+    private static async Task MakeStockInReferenceOptionalAsync(System.Data.Common.DbConnection connection)
+    {
+        await using var check = connection.CreateCommand();
+        check.CommandText = "SELECT IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'StockIns' AND COLUMN_NAME = 'StockInNumber'";
+        if (string.Equals((string?)await check.ExecuteScalarAsync(), "YES", StringComparison.OrdinalIgnoreCase)) return;
+        await using var alter = connection.CreateCommand();
+        alter.CommandText = "ALTER TABLE `StockIns` MODIFY COLUMN `StockInNumber` varchar(255) NULL";
         await alter.ExecuteNonQueryAsync();
     }
 

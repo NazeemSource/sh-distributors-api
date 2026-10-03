@@ -93,7 +93,7 @@ public sealed class StockIn : Entity
 {
     public Guid CompanyId { get; set; }
     public Company? Company { get; set; }
-    public required string StockInNumber { get; set; }
+    public string? StockInNumber { get; set; }
     public DateOnly StockInDate { get; set; }
     public decimal StockTotal { get; set; }
     public string PaymentStatus { get; set; } = "PENDING";

@@ -30,6 +30,23 @@ public sealed class BusinessOperationsTests
     }
 
     [Fact]
+    public async Task Stock_in_reference_is_optional_for_multiple_deliveries()
+    {
+        await using var db=CreateDb();
+        var company=new Company { Code="OPTIONAL-REF", Name="Optional reference company" };
+        db.Companies.Add(company);await db.SaveChangesAsync();
+        var operations=new OperationsService(db,new InventoryService(db),new PaymentService(db));
+        var product=await operations.CreateProduct(new ProductRequest(company.Id,"OPTIONAL-SKU","90000003","Optional reference product","General",100,70,1,null,0));
+        var date=new DateOnly(2026,10,3);
+        var first=await operations.CreateStockIn(new StockInRequest(company.Id,null,date,"",[new(product.Id,2,70)]));
+        var second=await operations.CreateStockIn(new StockInRequest(company.Id,"  ",date,"",[new(product.Id,3,70)]));
+        Assert.Null(first.StockInNumber);
+        Assert.Null(second.StockInNumber);
+        Assert.NotEqual(first.Id,second.Id);
+        Assert.Equal(5,await new InventoryService(db).GetCurrentStock(product.Id));
+    }
+
+    [Fact]
     public async Task New_invoice_numbers_use_a_shared_daily_sequence()
     {
         await using var db=CreateDb();

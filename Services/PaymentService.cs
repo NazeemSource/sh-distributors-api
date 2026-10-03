@@ -43,5 +43,5 @@ public sealed class PaymentService(AppDbContext db)
     private static string Status(decimal paid, decimal total) => paid <= 0 ? "PENDING" : paid < total ? "PARTIALLY_PAID" : "PAID";
 }
 public sealed record OutstandingOrder(Guid Id, string Number, DateOnly Date, decimal Total, decimal Balance);
-public sealed record OutstandingStockIn(Guid Id, string Number, DateOnly Date, decimal Total, decimal Balance);
+public sealed record OutstandingStockIn(Guid Id, string? Number, DateOnly Date, decimal Total, decimal Balance);
 

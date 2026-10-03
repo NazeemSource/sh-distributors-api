@@ -34,8 +34,9 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
     {
         if (request.Products.Count == 0) throw new BusinessException("validation_error", "At least one product is required.");
         if (!await db.Companies.AnyAsync(x => x.Id == request.CompanyId)) throw new BusinessException("not_found", "Company was not found.", 404);
-        var stockInNumber=request.StockInNumber.Trim();
-        if (await db.StockIns.AnyAsync(x => x.StockInNumber == stockInNumber)) throw new BusinessException("duplicate_stock_in", "Stock-in number already exists.", 409);
+        var stockInNumber=request.StockInNumber?.Trim();
+        if (string.IsNullOrEmpty(stockInNumber)) stockInNumber=null;
+        if (stockInNumber is not null && await db.StockIns.AnyAsync(x => x.StockInNumber == stockInNumber)) throw new BusinessException("duplicate_stock_in", "Stock-in number already exists.", 409);
         if (request.Products.GroupBy(x => x.ProductId).Any(x => x.Count() > 1)) throw new BusinessException("duplicate_product", "A product can appear only once.");
         var products = await db.Products.Where(x => request.Products.Select(y => y.ProductId).Contains(x.Id) && x.CompanyId == request.CompanyId && x.Active).ToDictionaryAsync(x => x.Id);
         if (products.Count != request.Products.Count) throw new BusinessException("invalid_product", "One or more products are invalid.");
