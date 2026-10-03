@@ -98,7 +98,7 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
                   CONSTRAINT `PK_DepositAccounts` PRIMARY KEY (`Id`),
                   CONSTRAINT `FK_DepositAccounts_Companies_CompanyId` FOREIGN KEY (`CompanyId`) REFERENCES `Companies` (`Id`) ON DELETE RESTRICT,
                   KEY `IX_DepositAccounts_CompanyId_Date` (`CompanyId`, `Date`)
-                ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_general_ci;
                 """);
             await db.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `DepositAccountPayments` (
@@ -115,7 +115,7 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
                   CONSTRAINT `PK_DepositAccountPayments` PRIMARY KEY (`Id`),
                   CONSTRAINT `FK_DepositAccountPayments_DepositAccounts_DepositAccountId` FOREIGN KEY (`DepositAccountId`) REFERENCES `DepositAccounts` (`Id`) ON DELETE RESTRICT,
                   KEY `IX_DepositAccountPayments_DepositAccountId` (`DepositAccountId`)
-                ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_general_ci;
                 """);
         }
         finally
