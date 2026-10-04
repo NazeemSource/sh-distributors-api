@@ -132,6 +132,11 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
                 ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_general_ci;
                 """);
             await AddColumnIfMissingAsync(connection, "DepositAccounts", "DueDate", "date NULL");
+            await AddColumnIfMissingAsync(connection, "DepositAccounts", "InvoiceNumber", "varchar(100) NOT NULL DEFAULT ''");
+            await AddColumnIfMissingAsync(connection, "DepositAccounts", "IsCreditAccount", "tinyint(1) NOT NULL DEFAULT 0");
+            await AddColumnIfMissingAsync(connection, "DepositAccounts", "ShopId", "char(36) NULL");
+            await AddDepositAccountShopIndexIfMissingAsync(connection);
+            await AddDepositAccountShopForeignKeyIfMissingAsync(connection);
             await db.Database.ExecuteSqlRawAsync("UPDATE `DepositAccounts` SET `DueDate` = `Date` WHERE `DueDate` IS NULL");
             await db.Database.ExecuteSqlRawAsync("ALTER TABLE `DepositAccounts` MODIFY COLUMN `Type` varchar(80) NOT NULL");
         }
@@ -193,6 +198,26 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
         if (Convert.ToInt64(await check.ExecuteScalarAsync()) > 0) return;
         await using var alter = connection.CreateCommand();
         alter.CommandText = "ALTER TABLE `Shops` ADD CONSTRAINT `FK_Shops_Users_CreatedByRepId` FOREIGN KEY (`CreatedByRepId`) REFERENCES `Users` (`Id`) ON DELETE RESTRICT";
+        await alter.ExecuteNonQueryAsync();
+    }
+
+    private static async Task AddDepositAccountShopIndexIfMissingAsync(System.Data.Common.DbConnection connection)
+    {
+        await using var check = connection.CreateCommand();
+        check.CommandText = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DepositAccounts' AND INDEX_NAME = 'IX_DepositAccounts_ShopId'";
+        if (Convert.ToInt64(await check.ExecuteScalarAsync()) > 0) return;
+        await using var alter = connection.CreateCommand();
+        alter.CommandText = "CREATE INDEX `IX_DepositAccounts_ShopId` ON `DepositAccounts` (`ShopId`)";
+        await alter.ExecuteNonQueryAsync();
+    }
+
+    private static async Task AddDepositAccountShopForeignKeyIfMissingAsync(System.Data.Common.DbConnection connection)
+    {
+        await using var check = connection.CreateCommand();
+        check.CommandText = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DepositAccounts' AND CONSTRAINT_NAME = 'FK_DepositAccounts_Shops_ShopId'";
+        if (Convert.ToInt64(await check.ExecuteScalarAsync()) > 0) return;
+        await using var alter = connection.CreateCommand();
+        alter.CommandText = "ALTER TABLE `DepositAccounts` ADD CONSTRAINT `FK_DepositAccounts_Shops_ShopId` FOREIGN KEY (`ShopId`) REFERENCES `Shops` (`Id`) ON DELETE RESTRICT";
         await alter.ExecuteNonQueryAsync();
     }
 
