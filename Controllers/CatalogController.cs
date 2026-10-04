@@ -59,11 +59,19 @@ public sealed class CatalogController(AppDbContext db, OperationsService operati
         var legacyPrefix=r.Notes?.Split('|',2)[0].Trim();
         var name=(r.Reason??(legacyPrefix?.StartsWith("Reason: ",StringComparison.OrdinalIgnoreCase)==true?legacyPrefix[8..]:"")).Trim();
         if(name.Length>80)return ValidationProblem("Adjustment reason must be at most 80 characters.");
-        var x=await inventory.CreateStockAdjustment(id,r.Quantity,r.Direction,r.Notes??"");
+        var x=await inventory.CreateStockAdjustment(id,r.Quantity,r.Direction,r.Notes??"",r.UnitCost,r.UnitPrice);
         if(name.Length>0&&!await db.StockAdjustmentReasons.AnyAsync(item=>item.Name==name))
             db.StockAdjustmentReasons.Add(new StockAdjustmentReason{Name=name});
         await db.SaveChangesAsync();return Ok(x);
     }
+    [HttpPut("products/{id:guid}/stock-history/{movementId:guid}"),Authorize(Roles="Admin")]
+    public async Task<IActionResult> UpdateStockMovement(Guid id,Guid movementId,UpdateStockMovementRequest r){
+        if(string.IsNullOrWhiteSpace(r.Reason))return ValidationProblem("Reason is required.");
+        var x=await inventory.UpdateManualMovement(id,movementId,r.Date,r.Quantity,r.Reason,r.UnitCost,r.UnitPrice);
+        await db.SaveChangesAsync();return Ok(x);
+    }
+    [HttpDelete("products/{id:guid}/stock-history/{movementId:guid}"),Authorize(Roles="Admin")]
+    public async Task<IActionResult> DeleteStockMovement(Guid id,Guid movementId){await inventory.DeleteManualMovement(id,movementId);await db.SaveChangesAsync();return NoContent();}
 
     private async Task<IActionResult> SoftDelete<T>(DbSet<T> set,Guid id) where T:Entity{var x=await set.FindAsync(id);if(x is null)return NotFound();x.IsDeleted=true;x.DeletedAt=DateTimeOffset.UtcNow;x.UpdatedAt=DateTimeOffset.UtcNow;await db.SaveChangesAsync();return NoContent();}
     private static async Task<object> Page<T>(IQueryable<T> query,int page,int pageSize){page=Math.Max(1,page);pageSize=Math.Clamp(pageSize,1,100);var total=await query.CountAsync();return new{items=await query.Skip((page-1)*pageSize).Take(pageSize).ToListAsync(),page,pageSize,total,totalPages=(int)Math.Ceiling(total/(double)pageSize)};}

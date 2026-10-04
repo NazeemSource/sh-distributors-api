@@ -77,4 +77,32 @@ public sealed class AdjustmentReasonSyncTests
         Assert.Equal(101, JsonSerializer.SerializeToElement(await controller.StockIns(null, null, null, null)).GetArrayLength());
         Assert.Equal(101, JsonSerializer.SerializeToElement(await controller.Orders(null, null, null, null, null)).GetArrayLength());
     }
+
+    [Fact]
+    public async Task Manual_stock_movement_can_be_corrected_and_deleted_with_price_history()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        await using var db = new AppDbContext(options);
+        var company = new Company { Code = "MOVE-CO", Name = "Movement company" };
+        var product = new Product { CompanyId = company.Id, Sku = "MOVE-SKU", Barcode = "MOVE-BAR", Name = "Movement product", Category = "General", CostPrice = 5, SellingPrice = 8 };
+        db.AddRange(company, product);
+        await db.SaveChangesAsync();
+        var inventory = new InventoryService(db);
+        await inventory.CreateOpeningStock(product.Id, 10, 5, 8);
+        await db.SaveChangesAsync();
+
+        var movement = Assert.Single(await inventory.GetStockHistory(product.Id));
+        Assert.Equal(5, movement.UnitCost);
+        Assert.Equal(8, movement.UnitPrice);
+
+        await inventory.UpdateManualMovement(product.Id, movement.Id, new DateOnly(2026, 10, 2), 12, "Corrected opening stock", 6, 9);
+        await db.SaveChangesAsync();
+        Assert.Equal(12, await inventory.GetCurrentStock(product.Id));
+        Assert.Equal(9, (await inventory.GetStockHistory(product.Id)).Single().UnitPrice);
+
+        await inventory.DeleteManualMovement(product.Id, movement.Id);
+        await db.SaveChangesAsync();
+        Assert.Equal(0, await inventory.GetCurrentStock(product.Id));
+        Assert.Empty(await inventory.GetStockHistory(product.Id));
+    }
 }

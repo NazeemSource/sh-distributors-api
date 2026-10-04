@@ -22,7 +22,7 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
             var product = new Product { CompanyId=request.CompanyId, Sku=sku, Barcode=barcode, Name=request.Name.Trim(), Category=request.Category.Trim(), SellingPrice=request.SellingPrice, CostPrice=request.CostPrice, Mrp=request.Mrp??request.SellingPrice, ReorderLevel=request.ReorderLevel, ExpiryDate=request.ExpiryDate, Active=request.Active };
             db.Products.Add(product);
             await db.SaveChangesAsync();
-            await inventory.CreateOpeningStock(product.Id, request.OpeningStock);
+            await inventory.CreateOpeningStock(product.Id, request.OpeningStock, request.CostPrice, request.SellingPrice);
             await db.SaveChangesAsync();
             if (transaction is not null) await transaction.CommitAsync();
             return product;
@@ -46,7 +46,7 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         {
             var stockIn = new StockIn { CompanyId=request.CompanyId, StockInNumber=stockInNumber, StockInDate=request.StockInDate, Notes=request.Notes.Trim(), Products=request.Products.Select(x => new StockInProduct { ProductId=x.ProductId, Quantity=x.Quantity, UnitCost=x.UnitCost, LineTotal=decimal.Round(x.Quantity*x.UnitCost,2) }).ToList() };
             stockIn.StockTotal = stockIn.Products.Sum(x => x.LineTotal);
-            db.StockIns.Add(stockIn); inventory.ProcessStockIn(stockIn);
+            db.StockIns.Add(stockIn);
             foreach (var line in request.Products)
             {
                 var product = products[line.ProductId];
@@ -55,6 +55,7 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
                 if (line.Mrp.HasValue) product.Mrp = line.Mrp.Value;
                 product.UpdatedAt = DateTimeOffset.UtcNow;
             }
+            inventory.ProcessStockIn(stockIn, products);
             await db.SaveChangesAsync();
             if (transaction is not null) await transaction.CommitAsync();
             return stockIn;

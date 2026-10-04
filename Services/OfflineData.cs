@@ -33,7 +33,7 @@ public sealed class OfflineData(AppDbContext db, InventoryService inventory, Pay
         if (entity is StockIn stock) { stock.Products = stock.Products.OrderBy(x => x.Id).ToList(); stock.Payments = stock.Payments.OrderBy(x => x.Id).ToList(); }
         if (entity is DepositAccount account) account.Payments = account.Payments.OrderBy(x => x.Id).ToList();
         var json = JsonSerializer.Serialize(entity, entity.GetType(), Json);
-        if (entity is Product) json += JsonSerializer.Serialize(await db.InventoryTransactions.AsNoTracking().Where(x => x.ProductId == id).OrderBy(x => x.Id).Select(x => new { x.Id, x.QuantityIn, x.QuantityOut }).ToListAsync(), Json);
+        if (entity is Product) json += JsonSerializer.Serialize(await db.InventoryTransactions.AsNoTracking().Where(x => x.ProductId == id).OrderBy(x => x.Id).Select(x => new { x.Id, x.UpdatedAt, x.TransactionDate, x.QuantityIn, x.QuantityOut, x.UnitCost, x.UnitPrice, x.Notes }).ToListAsync(), Json);
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json)));
     }
 

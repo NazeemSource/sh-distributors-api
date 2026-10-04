@@ -89,6 +89,8 @@ public sealed class InventoryTransaction : Entity
     public required string Type { get; set; }
     public decimal QuantityIn { get; set; }
     public decimal QuantityOut { get; set; }
+    public decimal? UnitCost { get; set; }
+    public decimal? UnitPrice { get; set; }
     public string ReferenceType { get; set; } = "";
     public Guid? ReferenceId { get; set; }
     public string Notes { get; set; } = "";
