@@ -59,6 +59,9 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
             await AddColumnIfMissingAsync(connection, "Users", "Phone", "varchar(40) NOT NULL DEFAULT ''");
             await AddColumnIfMissingAsync(connection, "Users", "Email", "varchar(180) NOT NULL DEFAULT ''");
             await AddColumnIfMissingAsync(connection, "Users", "MonthlyTarget", "decimal(18,2) NOT NULL DEFAULT 0");
+            await AddColumnIfMissingAsync(connection, "Companies", "Category", "varchar(120) NOT NULL DEFAULT ''");
+            await AddColumnIfMissingAsync(connection, "Companies", "City", "varchar(120) NOT NULL DEFAULT ''");
+            await db.Database.ExecuteSqlRawAsync("UPDATE `Companies` SET `Category` = `Address` WHERE `Category` = '' AND `Address` <> ''");
             await MakeStockInReferenceOptionalAsync(connection);
             await AddColumnIfMissingAsync(connection, "Shops", "CreatedByRepId", "char(36) NULL");
             await AddColumnIfMissingAsync(connection, "Products", "Mrp", "decimal(18,2) NULL");
@@ -98,7 +101,8 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
                   `Id` char(36) NOT NULL,
                   `CompanyId` char(36) NOT NULL,
                   `Date` date NOT NULL,
-                  `Type` varchar(30) NOT NULL,
+                  `DueDate` date NULL,
+                  `Type` varchar(80) NOT NULL,
                   `Account` varchar(160) NOT NULL,
                   `Total` decimal(18,2) NOT NULL,
                   `IsDeleted` tinyint(1) NOT NULL DEFAULT 0,
@@ -127,6 +131,9 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
                   KEY `IX_DepositAccountPayments_DepositAccountId` (`DepositAccountId`)
                 ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_general_ci;
                 """);
+            await AddColumnIfMissingAsync(connection, "DepositAccounts", "DueDate", "date NULL");
+            await db.Database.ExecuteSqlRawAsync("UPDATE `DepositAccounts` SET `DueDate` = `Date` WHERE `DueDate` IS NULL");
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE `DepositAccounts` MODIFY COLUMN `Type` varchar(80) NOT NULL");
         }
         finally
         {

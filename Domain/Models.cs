@@ -43,7 +43,9 @@ public sealed class Company : Entity
     public required string Name { get; set; }
     public string ContactName { get; set; } = "";
     public string Phone { get; set; } = "";
+    public string Category { get; set; } = "";
     public string Address { get; set; } = "";
+    public string City { get; set; } = "";
     public bool Active { get; set; } = true;
 }
 
@@ -131,6 +133,7 @@ public sealed class DepositAccount : Entity
     public Guid CompanyId { get; set; }
     public Company? Company { get; set; }
     public DateOnly Date { get; set; }
+    public DateOnly? DueDate { get; set; }
     public required string Type { get; set; }
     public required string Account { get; set; }
     public decimal Total { get; set; }

@@ -77,6 +77,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
         modelBuilder.Entity<Company>().HasIndex(x => x.Code).IsUnique();
         modelBuilder.Entity<Company>().HasIndex(x => x.Name);
+        modelBuilder.Entity<Company>().Property(x => x.Category).HasMaxLength(120);
+        modelBuilder.Entity<Company>().Property(x => x.City).HasMaxLength(120);
         modelBuilder.Entity<Shop>().HasIndex(x => new { x.CompanyId, x.Code }).IsUnique();
         modelBuilder.Entity<Shop>().HasIndex(x => x.Name);
         modelBuilder.Entity<Shop>().HasOne(x => x.Company).WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.Restrict);
@@ -97,7 +99,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         modelBuilder.Entity<StockInProduct>().HasOne(x => x.StockIn).WithMany(x => x.Products).HasForeignKey(x => x.StockInId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<StockInProduct>().HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<StockInPayment>().HasOne(x => x.StockIn).WithMany(x => x.Payments).HasForeignKey(x => x.StockInId).OnDelete(DeleteBehavior.Restrict);
-        modelBuilder.Entity<DepositAccount>().Property(x => x.Type).HasMaxLength(30).IsRequired();
+        modelBuilder.Entity<DepositAccount>().Property(x => x.Type).HasMaxLength(80).IsRequired();
         modelBuilder.Entity<DepositAccount>().Property(x => x.Account).HasMaxLength(160).IsRequired();
         modelBuilder.Entity<DepositAccount>().HasIndex(x => new { x.CompanyId, x.Date });
         modelBuilder.Entity<DepositAccount>().HasOne(x => x.Company).WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.Restrict);
