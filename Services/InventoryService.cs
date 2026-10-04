@@ -65,7 +65,7 @@ public sealed class InventoryService(AppDbContext db)
         return movement;
     }
 
-    public async Task<InventoryTransaction> UpdateManualMovement(Guid productId, Guid movementId, DateOnly date, decimal signedQuantity, string reason, decimal unitCost, decimal unitPrice)
+    public async Task<InventoryTransaction> UpdateManualMovement(Guid productId, Guid movementId, DateOnly date, decimal signedQuantity, string reason, decimal unitCost, decimal unitPrice, decimal mrp)
     {
         var movement = await EditableMovement(productId, movementId);
         if (signedQuantity == 0) throw new BusinessException("invalid_quantity", "Quantity cannot be zero.");
@@ -80,6 +80,9 @@ public sealed class InventoryService(AppDbContext db)
         movement.UnitPrice = unitPrice;
         movement.Notes = reason.Trim();
         movement.UpdatedAt = DateTimeOffset.UtcNow;
+        var product = await db.Products.SingleAsync(x => x.Id == productId);
+        product.Mrp = mrp;
+        product.UpdatedAt = DateTimeOffset.UtcNow;
         return movement;
     }
 

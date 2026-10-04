@@ -67,7 +67,7 @@ public sealed class CatalogController(AppDbContext db, OperationsService operati
     [HttpPut("products/{id:guid}/stock-history/{movementId:guid}"),Authorize(Roles="Admin")]
     public async Task<IActionResult> UpdateStockMovement(Guid id,Guid movementId,UpdateStockMovementRequest r){
         if(string.IsNullOrWhiteSpace(r.Reason))return ValidationProblem("Reason is required.");
-        var x=await inventory.UpdateManualMovement(id,movementId,r.Date,r.Quantity,r.Reason,r.UnitCost,r.UnitPrice);
+        var x=await inventory.UpdateManualMovement(id,movementId,r.Date,r.Quantity,r.Reason,r.UnitCost,r.UnitPrice,r.Mrp);
         await db.SaveChangesAsync();return Ok(x);
     }
     [HttpDelete("products/{id:guid}/stock-history/{movementId:guid}"),Authorize(Roles="Admin")]

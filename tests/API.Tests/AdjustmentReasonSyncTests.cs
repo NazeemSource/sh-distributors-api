@@ -95,10 +95,11 @@ public sealed class AdjustmentReasonSyncTests
         Assert.Equal(5, movement.UnitCost);
         Assert.Equal(8, movement.UnitPrice);
 
-        await inventory.UpdateManualMovement(product.Id, movement.Id, new DateOnly(2026, 10, 2), 12, "Corrected opening stock", 6, 9);
+        await inventory.UpdateManualMovement(product.Id, movement.Id, new DateOnly(2026, 10, 2), 12, "Corrected opening stock", 6, 9, 11);
         await db.SaveChangesAsync();
         Assert.Equal(12, await inventory.GetCurrentStock(product.Id));
         Assert.Equal(9, (await inventory.GetStockHistory(product.Id)).Single().UnitPrice);
+        Assert.Equal(11, (await db.Products.SingleAsync(x => x.Id == product.Id)).Mrp);
 
         await inventory.DeleteManualMovement(product.Id, movement.Id);
         await db.SaveChangesAsync();
