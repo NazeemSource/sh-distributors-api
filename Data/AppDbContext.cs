@@ -103,8 +103,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         modelBuilder.Entity<StockInPayment>().HasOne(x => x.StockIn).WithMany(x => x.Payments).HasForeignKey(x => x.StockInId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<DepositAccount>().Property(x => x.Type).HasMaxLength(80).IsRequired();
         modelBuilder.Entity<DepositAccount>().Property(x => x.Account).HasMaxLength(160).IsRequired();
+        modelBuilder.Entity<DepositAccount>().Property(x => x.InvoiceNumber).HasMaxLength(100);
         modelBuilder.Entity<DepositAccount>().HasIndex(x => new { x.CompanyId, x.Date });
         modelBuilder.Entity<DepositAccount>().HasOne(x => x.Company).WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<DepositAccount>().HasOne(x => x.Shop).WithMany().HasForeignKey(x => x.ShopId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<DepositAccountPayment>().Property(x => x.Method).HasMaxLength(40).IsRequired();
         modelBuilder.Entity<DepositAccountPayment>().Property(x => x.Reference).HasMaxLength(120);
         modelBuilder.Entity<DepositAccountPayment>().HasOne(x => x.DepositAccount).WithMany(x => x.Payments).HasForeignKey(x => x.DepositAccountId).OnDelete(DeleteBehavior.Restrict);

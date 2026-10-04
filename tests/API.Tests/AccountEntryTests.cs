@@ -47,6 +47,26 @@ public sealed class AccountEntryTests
         Assert.Equal("2026-10-18", json.GetProperty("dueDate").GetString());
     }
 
+    [Fact]
+    public async Task Credit_account_keeps_invoice_shop_company_and_outstanding_amount()
+    {
+        await using var db = CreateDb();
+        var company = new Company { Code = "CREDIT-CO", Name = "Credit company" };
+        var shop = new Shop { CompanyId = company.Id, Code = "SHOP-1", Name = "Credit shop" };
+        db.AddRange(company, shop); await db.SaveChangesAsync();
+        var controller = new DepositAccountsController(db);
+        var date = new DateOnly(2026, 10, 4);
+
+        var result = await controller.Create(new CreateDepositAccountRequest(company.Id, date, "Customer credit", Account: "CR-1001", Amount: 875, DueDate: date, ShopId: shop.Id, InvoiceNumber: "CR-1001", IsCreditAccount: true));
+
+        var created = Assert.IsType<CreatedAtActionResult>(result);
+        var json = JsonSerializer.SerializeToElement(created.Value, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        Assert.True(json.GetProperty("isCreditAccount").GetBoolean());
+        Assert.Equal(shop.Id, json.GetProperty("shopId").GetGuid());
+        Assert.Equal("CR-1001", json.GetProperty("invoiceNumber").GetString());
+        Assert.Equal(875, json.GetProperty("due").GetDecimal());
+    }
+
     private static AppDbContext CreateDb()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;

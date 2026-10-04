@@ -134,10 +134,14 @@ public sealed class DepositAccount : Entity
 {
     public Guid CompanyId { get; set; }
     public Company? Company { get; set; }
+    public Guid? ShopId { get; set; }
+    public Shop? Shop { get; set; }
     public DateOnly Date { get; set; }
     public DateOnly? DueDate { get; set; }
     public required string Type { get; set; }
     public required string Account { get; set; }
+    public string InvoiceNumber { get; set; } = "";
+    public bool IsCreditAccount { get; set; }
     public decimal Total { get; set; }
     public List<DepositAccountPayment> Payments { get; set; } = [];
 }

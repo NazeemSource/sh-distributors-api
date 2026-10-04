@@ -39,9 +39,19 @@ public sealed class DepositAccountsController(AppDbContext db) : ControllerBase
         if (request.Paid > 0 && !Methods.Contains(request.PaymentMethod))
             return ValidationProblem("Choose a payment method for the paid amount.");
         if (!await db.Companies.AnyAsync(x => x.Id == request.CompanyId)) return NotFound(new { message = "Company not found." });
+        if (request.IsCreditAccount)
+        {
+            if (request.ShopId is null) return ValidationProblem("Shop / customer is required for a credit account.");
+            if (string.IsNullOrWhiteSpace(request.InvoiceNumber)) return ValidationProblem("Invoice number is required for a credit account.");
+            if (!await db.Shops.AnyAsync(x => x.Id == request.ShopId && x.CompanyId == request.CompanyId))
+                return ValidationProblem("The selected shop does not belong to the selected company.");
+            if (await db.DepositAccounts.AnyAsync(x => x.IsCreditAccount && x.InvoiceNumber == request.InvoiceNumber.Trim()))
+                return Conflict(new { message = "Invoice number is already in use." });
+        }
         var record = new DepositAccount {
-            CompanyId = request.CompanyId, Date = request.Date, DueDate = dueDate, Type = type,
-            Account = string.IsNullOrWhiteSpace(request.Account) ? type : request.Account.Trim(), Total = amount
+            CompanyId = request.CompanyId, ShopId = request.ShopId, Date = request.Date, DueDate = dueDate, Type = type,
+            Account = string.IsNullOrWhiteSpace(request.Account) ? type : request.Account.Trim(),
+            InvoiceNumber = (request.InvoiceNumber ?? "").Trim(), IsCreditAccount = request.IsCreditAccount, Total = amount
         };
         if (request.Paid > 0) record.Payments.Add(new DepositAccountPayment {
             PaymentDate = request.Date, Amount = request.Paid, Method = request.PaymentMethod
@@ -79,7 +89,8 @@ public sealed class DepositAccountsController(AppDbContext db) : ControllerBase
         var paid = payments.Sum(x => x.Amount);
         var due = Math.Max(0, record.Total - paid);
         return new {
-            record.Id, record.CompanyId, record.Date, DueDate = record.DueDate ?? record.Date, record.Type, record.Account, record.Total,
+            record.Id, record.CompanyId, record.ShopId, record.Date, DueDate = record.DueDate ?? record.Date, record.Type, record.Account,
+            record.InvoiceNumber, record.IsCreditAccount, record.Total,
             Paid = paid, Due = due, PaymentMethod = payments.LastOrDefault()?.Method ?? "",
             Status = due == 0 ? "Paid" : paid > 0 ? "Partially paid" : "Pending",
             Payments = payments.Select(x => new { x.Id, x.PaymentDate, x.Amount, x.Method, x.Reference }).ToList()
