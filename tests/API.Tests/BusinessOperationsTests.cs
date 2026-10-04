@@ -9,6 +9,32 @@ namespace API.Tests;
 public sealed class BusinessOperationsTests
 {
     [Fact]
+    public async Task Returns_credit_the_invoice_and_only_resellable_units_restore_stock()
+    {
+        await using var db = CreateDb();
+        var company = new Company { Code = "RETURN-CO", Name = "Return company" };
+        var shop = new Shop { CompanyId = company.Id, Code = "RETURN-SHOP", Name = "Return shop" };
+        var rep = new User { CompanyId = company.Id, Name = "Return rep", Username = "return-rep", PasswordHash = "hash", Role = "Rep" };
+        db.AddRange(company, shop, rep); await db.SaveChangesAsync();
+        var inventory = new InventoryService(db); var payments = new PaymentService(db); var operations = new OperationsService(db, inventory, payments);
+        var product = await operations.CreateProduct(new ProductRequest(company.Id, "RETURN-SKU", "90000999", "Return product", "General", 50, 30, 1, null, 10, true, 60));
+        var date = new DateOnly(2026, 10, 4);
+        var order = await operations.CreateOrder(new OrderRequest(shop.Id, rep.Id, "RETURN-ORDER", date, date, "", "", [new(product.Id, 5, 0, 50)]));
+
+        Assert.Equal(5, await inventory.GetCurrentStock(product.Id));
+        var resellable = await operations.CreateProductReturn(order.Id, new ProductReturnRequest(product.Id, date, 2, "Resellable", "Unopened items"));
+        Assert.Equal(100, resellable.Amount);
+        Assert.Equal(7, await inventory.GetCurrentStock(product.Id));
+        Assert.Equal(150, await payments.GetOrderBalance(order.Id));
+
+        await operations.CreateProductReturn(order.Id, new ProductReturnRequest(product.Id, date, 1, "Damaged", "Damaged pack"));
+        Assert.Equal(7, await inventory.GetCurrentStock(product.Id));
+        Assert.Equal(100, await payments.GetOrderBalance(order.Id));
+        await Assert.ThrowsAsync<BusinessException>(() => operations.CreateProductReturn(order.Id, new ProductReturnRequest(product.Id, date, 3, "Resellable", "Too many")));
+        await Assert.ThrowsAsync<BusinessException>(() => operations.UpdateOrder(order.Id, new OrderRequest(shop.Id, rep.Id, order.OrderNumber, date, date, "", "", [new(product.Id, 5, 0, 50)])));
+    }
+
+    [Fact]
     public async Task Admin_orders_commit_stock_only_as_delivered_while_rep_orders_commit_on_placement()
     {
         await using var db = CreateDb();

@@ -104,12 +104,39 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         return prefix+(last+1).ToString("D4",CultureInfo.InvariantCulture);
     }
 
+    public async Task<ProductReturn> CreateProductReturn(Guid orderId, ProductReturnRequest request)
+    {
+        var order = await db.Orders.Include(x => x.Products).Include(x => x.Returns).SingleOrDefaultAsync(x => x.Id == orderId)
+            ?? throw new BusinessException("not_found", "Order was not found.", 404);
+        if (request.ReturnDate < order.OrderDate) throw new BusinessException("invalid_date", "Return date cannot be before the invoice date.");
+        var condition = request.Condition.Trim();
+        if (!new[] { "Resellable", "Damaged", "Expired" }.Contains(condition, StringComparer.OrdinalIgnoreCase)) throw new BusinessException("invalid_condition", "Choose Resellable, Damaged, or Expired.");
+        var line = order.Products.SingleOrDefault(x => x.ProductId == request.ProductId) ?? throw new BusinessException("invalid_product", "This product is not on the invoice.");
+        var alreadyReturned = order.Returns.Where(x => x.ProductId == request.ProductId).Sum(x => x.Quantity);
+        var committedSoldQuantity = Math.Min(line.Quantity, line.StockCommittedQuantity);
+        if (request.Quantity <= 0 || request.Quantity > committedSoldQuantity - alreadyReturned) throw new BusinessException("invalid_return_quantity", "Return quantity exceeds the invoiced quantity available to return.", 409);
+        var prefix = "RET-" + request.ReturnDate.ToString("ddMMyyyy", CultureInfo.InvariantCulture);
+        var existing = await db.ProductReturns.IgnoreQueryFilters().Where(x => x.ReturnNumber.StartsWith(prefix)).Select(x => x.ReturnNumber).ToListAsync();
+        var last = existing.Select(number => int.TryParse(number[prefix.Length..], NumberStyles.None, CultureInfo.InvariantCulture, out var sequence) ? sequence : 0).DefaultIfEmpty().Max();
+        await using var transaction = await BeginTransaction();
+        try
+        {
+            var item = new ProductReturn { OrderId = order.Id, ProductId = line.ProductId, ReturnNumber = prefix + (last + 1).ToString("D4", CultureInfo.InvariantCulture), ReturnDate = request.ReturnDate, Quantity = request.Quantity, UnitPrice = line.UnitPrice, Amount = decimal.Round(request.Quantity * line.UnitPrice, 2), Condition = char.ToUpperInvariant(condition[0]) + condition[1..].ToLowerInvariant(), Reason = request.Reason.Trim() };
+            db.ProductReturns.Add(item); inventory.ProcessCustomerReturn(item);
+            await db.SaveChangesAsync(); await payments.RecalculateOrderPaymentStatus(order); await db.SaveChangesAsync();
+            if (transaction is not null) await transaction.CommitAsync();
+            return item;
+        }
+        catch { if (transaction is not null) await transaction.RollbackAsync(); throw; }
+    }
+
     public async Task<Order> UpdateOrder(Guid id, OrderRequest request)
     {
         if (request.Products.Count == 0) throw new BusinessException("validation_error", "At least one product is required.");
         if (request.DeliveryDate < request.OrderDate) throw new BusinessException("invalid_date", "Delivery date cannot be before order date.");
         if (request.Products.GroupBy(x => x.ProductId).Any(x => x.Count() > 1)) throw new BusinessException("duplicate_product", "A product can appear only once.");
-        var order = await db.Orders.Include(x => x.Products).SingleOrDefaultAsync(x => x.Id == id) ?? throw new BusinessException("not_found", "Order was not found.", 404);
+        var order = await db.Orders.Include(x => x.Products).Include(x => x.Returns).SingleOrDefaultAsync(x => x.Id == id) ?? throw new BusinessException("not_found", "Order was not found.", 404);
+        if (order.Returns.Count > 0) throw new BusinessException("order_has_returns", "Orders with recorded returns cannot be edited.", 409);
         if (order.Products.Any(x => x.DeliveredQuantity > 0)) throw new BusinessException("already_delivered", "Delivered orders cannot be edited.", 409);
         var shop = await db.Shops.FindAsync(request.ShopId) ?? throw new BusinessException("not_found", "Shop was not found.", 404);
         var rep = await db.Users.FindAsync(request.SalesRepId) ?? throw new BusinessException("not_found", "Sales rep was not found.", 404);
@@ -143,17 +170,19 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
 
     public async Task DeleteOrder(Guid id)
     {
-        var order = await db.Orders.Include(x => x.Products).Include(x => x.Payments).SingleOrDefaultAsync(x => x.Id == id)
+        var order = await db.Orders.Include(x => x.Products).Include(x => x.Payments).Include(x => x.Returns).SingleOrDefaultAsync(x => x.Id == id)
             ?? throw new BusinessException("not_found", "Order was not found.", 404);
         var cheques = await db.Cheques.Where(x => x.OrderId == id).ToListAsync();
         await using var transaction = await BeginTransaction();
         try
         {
             inventory.ReverseOrderStock(order);
+            foreach (var item in order.Returns.Where(x => x.Condition == "Resellable")) db.InventoryTransactions.Add(new InventoryTransaction { ProductId = item.ProductId, Type = "RETURN_DELETION", QuantityOut = item.Quantity, UnitPrice = item.UnitPrice, ReferenceType = "RETURN", ReferenceId = item.Id, Notes = "Deleted return: " + item.ReturnNumber });
             var now = DateTimeOffset.UtcNow;
             order.IsDeleted = true; order.DeletedAt = now; order.UpdatedAt = now;
             foreach (var line in order.Products) { line.IsDeleted = true; line.DeletedAt = now; line.UpdatedAt = now; }
             foreach (var payment in order.Payments) { payment.IsDeleted = true; payment.DeletedAt = now; payment.UpdatedAt = now; }
+            foreach (var item in order.Returns) { item.IsDeleted = true; item.DeletedAt = now; item.UpdatedAt = now; }
             foreach (var cheque in cheques) { cheque.IsDeleted = true; cheque.DeletedAt = now; cheque.UpdatedAt = now; }
             await db.SaveChangesAsync();
             if (transaction is not null) await transaction.CommitAsync();

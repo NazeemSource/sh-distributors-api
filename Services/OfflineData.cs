@@ -22,14 +22,15 @@ public sealed class OfflineData(AppDbContext db, InventoryService inventory, Pay
             "companies" => await db.Companies.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id),
             "shops" => await db.Shops.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id),
             "products" => await db.Products.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id),
-            "orders" => await db.Orders.AsNoTracking().Include(x => x.Products).Include(x => x.Payments).SingleOrDefaultAsync(x => x.Id == id),
+            "orders" => await db.Orders.AsNoTracking().Include(x => x.Products).Include(x => x.Payments).Include(x => x.Returns).SingleOrDefaultAsync(x => x.Id == id),
+            "returns" => await db.ProductReturns.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id),
             "stock-ins" => await db.StockIns.AsNoTracking().Include(x => x.Products).Include(x => x.Payments).SingleOrDefaultAsync(x => x.Id == id),
             "deposit-accounts" => await db.DepositAccounts.AsNoTracking().Include(x => x.Payments).SingleOrDefaultAsync(x => x.Id == id),
             "cheques" => await db.Cheques.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id), _ => null
         };
         if (entity is null) return "missing";
         // Sort children so query execution order cannot create a false conflict.
-        if (entity is Order order) { order.Products = order.Products.OrderBy(x => x.Id).ToList(); order.Payments = order.Payments.OrderBy(x => x.Id).ToList(); }
+        if (entity is Order order) { order.Products = order.Products.OrderBy(x => x.Id).ToList(); order.Payments = order.Payments.OrderBy(x => x.Id).ToList(); order.Returns = order.Returns.OrderBy(x => x.Id).ToList(); }
         if (entity is StockIn stock) { stock.Products = stock.Products.OrderBy(x => x.Id).ToList(); stock.Payments = stock.Payments.OrderBy(x => x.Id).ToList(); }
         if (entity is DepositAccount account) account.Payments = account.Payments.OrderBy(x => x.Id).ToList();
         var json = JsonSerializer.Serialize(entity, entity.GetType(), Json);
@@ -43,7 +44,8 @@ public sealed class OfflineData(AppDbContext db, InventoryService inventory, Pay
         var companies = await db.Companies.AsNoTracking().Where(x => admin || x.Id == companyId).OrderBy(x => x.Name).ToListAsync();
         var shops = await db.Shops.AsNoTracking().Where(x => admin || x.CompanyId == companyId && (x.CreatedByRepId == null || x.CreatedByRepId == userId)).OrderBy(x => x.Name).ToListAsync();
         var products = await db.Products.AsNoTracking().Where(x => admin || x.CompanyId == companyId).OrderBy(x => x.Name).ToListAsync();
-        var orders = await db.Orders.AsNoTracking().Where(x => admin || x.SalesRepId == userId).Include(x => x.Products).Include(x => x.Payments).OrderByDescending(x => x.OrderDate).ToListAsync();
+        var orders = await db.Orders.AsNoTracking().Where(x => admin || x.SalesRepId == userId).Include(x => x.Products).Include(x => x.Payments).Include(x => x.Returns).OrderByDescending(x => x.OrderDate).ToListAsync();
+        var returns = await db.ProductReturns.AsNoTracking().Include(x => x.Order).Where(x => admin || x.Order!.SalesRepId == userId).OrderByDescending(x => x.ReturnDate).ToListAsync();
         var stockIns = admin ? await db.StockIns.AsNoTracking().Include(x => x.Products).Include(x => x.Payments).OrderByDescending(x => x.StockInDate).ToListAsync() : [];
         var depositAccounts = admin ? await db.DepositAccounts.AsNoTracking().Include(x => x.Payments).OrderByDescending(x => x.Date).ToListAsync() : [];
         var shopIds = shops.Select(x => x.Id).ToList();
@@ -54,7 +56,7 @@ public sealed class OfflineData(AppDbContext db, InventoryService inventory, Pay
         var reads = new Dictionary<string, object> {
             ["/api/auth/me"] = UserView.From(users.Single(x => x.Id == userId)),
             ["/api/companies"] = Page(companies), ["/api/shops"] = Page(shops), ["/api/products"] = Page(products),
-            ["/api/orders"] = orders, ["/api/stock-ins"] = stockIns, ["/api/deposit-accounts"] = depositAccounts.Select(x => new { x.Id, x.CompanyId, x.Date, DueDate = x.DueDate ?? x.Date, x.Type, x.Account, x.Total, Paid = x.Payments.Sum(p => p.Amount), Due = x.Total - x.Payments.Sum(p => p.Amount), PaymentMethod = x.Payments.OrderBy(p => p.PaymentDate).LastOrDefault()?.Method ?? "", Status = x.Total == x.Payments.Sum(p => p.Amount) ? "Paid" : x.Payments.Sum(p => p.Amount) > 0 ? "Partially paid" : "Pending", Payments = x.Payments.Select(p => new { p.Id, p.PaymentDate, p.Amount, p.Method, p.Reference }).ToList() }).ToList(), ["/api/cheques"] = Page(cheques)
+            ["/api/orders"] = orders, ["/api/returns"] = returns.Select(x => new { x.Id, x.ReturnNumber, x.OrderId, OrderNumber=x.Order!.OrderNumber, x.Order.CompanyId, x.Order.ShopId, x.Order.SalesRepId, x.ProductId, x.ReturnDate, x.Quantity, x.UnitPrice, x.Amount, x.Condition, x.Reason }).ToList(), ["/api/stock-ins"] = stockIns, ["/api/deposit-accounts"] = depositAccounts.Select(x => new { x.Id, x.CompanyId, x.Date, DueDate = x.DueDate ?? x.Date, x.Type, x.Account, x.Total, Paid = x.Payments.Sum(p => p.Amount), Due = x.Total - x.Payments.Sum(p => p.Amount), PaymentMethod = x.Payments.OrderBy(p => p.PaymentDate).LastOrDefault()?.Method ?? "", Status = x.Total == x.Payments.Sum(p => p.Amount) ? "Paid" : x.Payments.Sum(p => p.Amount) > 0 ? "Partially paid" : "Pending", Payments = x.Payments.Select(p => new { p.Id, p.PaymentDate, p.Amount, p.Method, p.Reference }).ToList() }).ToList(), ["/api/cheques"] = Page(cheques)
         };
         if (admin) reads["/api/settings/adjustment-reasons"] = adjustmentReasons;
         if (admin) reads["/api/users"] = users.Select(UserView.From).ToList();
@@ -65,7 +67,7 @@ public sealed class OfflineData(AppDbContext db, InventoryService inventory, Pay
         foreach (var s in shops) reads[$"/api/shops/{s.Id}/outstanding"] = new { shopId = s.Id, outstanding = await payments.GetShopOutstanding(s.Id), orders = await payments.GetShopOutstandingOrders(s.Id) };
         if (admin) foreach (var c in companies) reads[$"/api/companies/{c.Id}/outstanding"] = new { companyId = c.Id, outstanding = await payments.GetCompanyOutstanding(c.Id), stockIns = await payments.GetCompanyOutstandingStockIns(c.Id) };
         var versions = new Dictionary<string, string>();
-        foreach (var (resource, ids) in new[] { ("companies", companies.Select(x => x.Id)), ("shops", shops.Select(x => x.Id)), ("products", products.Select(x => x.Id)), ("orders", orders.Select(x => x.Id)), ("stock-ins", stockIns.Select(x => x.Id)), ("deposit-accounts", depositAccounts.Select(x => x.Id)), ("cheques", cheques.Select(x => x.Id)) })
+        foreach (var (resource, ids) in new[] { ("companies", companies.Select(x => x.Id)), ("shops", shops.Select(x => x.Id)), ("products", products.Select(x => x.Id)), ("orders", orders.Select(x => x.Id)), ("returns", returns.Select(x => x.Id)), ("stock-ins", stockIns.Select(x => x.Id)), ("deposit-accounts", depositAccounts.Select(x => x.Id)), ("cheques", cheques.Select(x => x.Id)) })
             foreach (var id in ids) versions[$"{resource}/{id}"] = await Version($"{resource}/{id}");
         // Convert here to detach navigation properties and use the same JSON settings everywhere.
         return JsonSerializer.SerializeToElement(new { reads, versions, savedAt = DateTimeOffset.UtcNow }, Json);

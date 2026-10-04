@@ -48,6 +48,12 @@ public sealed class InventoryService(AppDbContext db)
         }
     }
 
+    public void ProcessCustomerReturn(ProductReturn item)
+    {
+        if (!item.Condition.Equals("Resellable", StringComparison.OrdinalIgnoreCase)) return;
+        db.InventoryTransactions.Add(Movement(item.ProductId, "CUSTOMER_RETURN", item.Quantity, 0, "RETURN", item.Id, item.Reason, null, item.UnitPrice));
+    }
+
     public async Task<InventoryTransaction> CreateStockAdjustment(Guid productId, decimal quantity, string direction, string notes, decimal? unitCost = null, decimal? unitPrice = null)
     {
         if (quantity <= 0) throw new BusinessException("invalid_quantity", "Quantity must be greater than zero.");

@@ -7,15 +7,16 @@ namespace Distributor.Api.Services;
 public sealed class PaymentService(AppDbContext db)
 {
     public Task<decimal> GetOrderPaidAmount(Guid orderId) => db.OrderPayments.Where(x => x.OrderId == orderId).SumAsync(x => x.PaidAmount);
+    public Task<decimal> GetOrderReturnAmount(Guid orderId) => db.ProductReturns.Where(x => x.OrderId == orderId).SumAsync(x => x.Amount);
     public async Task<decimal> GetOrderBalance(Guid orderId)
     {
         var order = await db.Orders.FindAsync(orderId) ?? throw new BusinessException("not_found", "Order was not found.", 404);
-        return Math.Max(0, order.OrderTotal - await GetOrderPaidAmount(orderId));
+        return Math.Max(0, order.OrderTotal - await GetOrderReturnAmount(orderId) - await GetOrderPaidAmount(orderId));
     }
     public async Task RecalculateOrderPaymentStatus(Order order)
     {
         var paid = await GetOrderPaidAmount(order.Id);
-        order.PaymentStatus = Status(paid, order.OrderTotal);
+        order.PaymentStatus = Status(paid, Math.Max(0, order.OrderTotal - await GetOrderReturnAmount(order.Id)));
     }
     public Task<decimal> GetStockInPaidAmount(Guid stockInId) => db.StockInPayments.Where(x => x.StockInId == stockInId).SumAsync(x => x.PaidAmount);
     public async Task<decimal> GetStockInBalance(Guid stockInId)
@@ -29,7 +30,7 @@ public sealed class PaymentService(AppDbContext db)
     {
         var orders = await db.Orders.AsNoTracking().Where(x => x.ShopId == shopId).ToListAsync();
         var result = new List<OutstandingOrder>();
-        foreach (var order in orders) { var balance = await GetOrderBalance(order.Id); if (balance > 0) result.Add(new(order.Id, order.OrderNumber, order.OrderDate, order.OrderTotal, balance)); }
+        foreach (var order in orders) { var returns = await GetOrderReturnAmount(order.Id); var balance = await GetOrderBalance(order.Id); if (balance > 0) result.Add(new(order.Id, order.OrderNumber, order.OrderDate, Math.Max(0, order.OrderTotal - returns), balance)); }
         return result;
     }
     public async Task<decimal> GetCompanyOutstanding(Guid companyId) => (await GetCompanyOutstandingStockIns(companyId)).Sum(x => x.Balance);

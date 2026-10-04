@@ -170,6 +170,7 @@ public sealed class Order : Entity
     public string Notes { get; set; } = "";
     public List<OrderProduct> Products { get; set; } = [];
     public List<OrderPayment> Payments { get; set; } = [];
+    public List<ProductReturn> Returns { get; set; } = [];
 }
 
 public sealed class OrderProduct : Entity
@@ -196,6 +197,21 @@ public sealed class OrderPayment : Entity
     public decimal PaidAmount { get; set; }
     public required string Method { get; set; }
     public string Reference { get; set; } = "";
+}
+
+public sealed class ProductReturn : Entity
+{
+    public Guid OrderId { get; set; }
+    public Order? Order { get; set; }
+    public Guid ProductId { get; set; }
+    public Product? Product { get; set; }
+    public required string ReturnNumber { get; set; }
+    public DateOnly ReturnDate { get; set; }
+    public decimal Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal Amount { get; set; }
+    public required string Condition { get; set; }
+    public string Reason { get; set; } = "";
 }
 
 public sealed class Cheque : Entity

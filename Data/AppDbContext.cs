@@ -21,6 +21,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderProduct> OrderProducts => Set<OrderProduct>();
     public DbSet<OrderPayment> OrderPayments => Set<OrderPayment>();
+    public DbSet<ProductReturn> ProductReturns => Set<ProductReturn>();
     public DbSet<Cheque> Cheques => Set<Cheque>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -73,6 +74,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         ConfigureEntity<Order>(modelBuilder, "Orders");
         ConfigureEntity<OrderProduct>(modelBuilder, "OrderProducts");
         ConfigureEntity<OrderPayment>(modelBuilder, "OrderPayments");
+        ConfigureEntity<ProductReturn>(modelBuilder, "ProductReturns");
         ConfigureEntity<Cheque>(modelBuilder, "Cheques");
 
         modelBuilder.Entity<Company>().HasIndex(x => x.Code).IsUnique();
@@ -119,6 +121,13 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         modelBuilder.Entity<OrderProduct>().HasOne(x => x.Order).WithMany(x => x.Products).HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<OrderProduct>().HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<OrderPayment>().HasOne(x => x.Order).WithMany(x => x.Payments).HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ProductReturn>().HasIndex(x => x.ReturnNumber).IsUnique();
+        modelBuilder.Entity<ProductReturn>().HasIndex(x => new { x.OrderId, x.ProductId });
+        modelBuilder.Entity<ProductReturn>().Property(x => x.ReturnNumber).HasMaxLength(100).IsRequired();
+        modelBuilder.Entity<ProductReturn>().Property(x => x.Condition).HasMaxLength(30).IsRequired();
+        modelBuilder.Entity<ProductReturn>().Property(x => x.Reason).HasMaxLength(500);
+        modelBuilder.Entity<ProductReturn>().HasOne(x => x.Order).WithMany(x => x.Returns).HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ProductReturn>().HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Cheque>().HasIndex(x => x.ChequeNumber).IsUnique();
         modelBuilder.Entity<Cheque>().HasIndex(x => new { x.ShopId, x.ChequeDate });
         modelBuilder.Entity<Cheque>().HasIndex(x => new { x.Status, x.ChequeDate });
