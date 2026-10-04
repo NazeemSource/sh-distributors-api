@@ -176,6 +176,8 @@ public sealed class OrderProduct : Entity
     public decimal Quantity { get; set; }
     public decimal FreeIssueQuantity { get; set; }
     public decimal DeliveredQuantity { get; set; }
+    // Quantity already removed from physical stock. Existing orders are backfilled below.
+    public decimal StockCommittedQuantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal? Mrp { get; set; }
     public decimal LineSubtotal { get; set; }

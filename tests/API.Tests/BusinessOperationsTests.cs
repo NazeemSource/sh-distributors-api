@@ -9,6 +9,42 @@ namespace API.Tests;
 public sealed class BusinessOperationsTests
 {
     [Fact]
+    public async Task Admin_orders_commit_stock_only_as_delivered_while_rep_orders_commit_on_placement()
+    {
+        await using var db = CreateDb();
+        var company = new Company { Code = "TIMING-CO", Name = "Timing company" };
+        var shop = new Shop { CompanyId = company.Id, Code = "TIMING-SHOP", Name = "Timing shop" };
+        var rep = new User { CompanyId = company.Id, Name = "Timing rep", Username = "timing-rep", PasswordHash = "hash", Role = "Rep" };
+        db.AddRange(company, shop, rep); await db.SaveChangesAsync();
+        var inventory = new InventoryService(db);
+        var operations = new OperationsService(db, inventory, new PaymentService(db));
+        var product = await operations.CreateProduct(new ProductRequest(company.Id, "TIMING-SKU", "90000444", "Timing product", "General", 50, 30, 1, null, 10, true, 60));
+        var date = new DateOnly(2026, 10, 3);
+        OrderRequest Request(string number, int quantity) => new(shop.Id, rep.Id, number, date, date, "", "", [new(product.Id, quantity, 0, 50)]);
+
+        var adminOrder = await operations.CreateOrder(Request("ADMIN-TIMING", 4), deductStockOnCreate: false);
+        Assert.Equal(0, adminOrder.Products.Single().StockCommittedQuantity);
+        Assert.Equal(10, await inventory.GetCurrentStock(product.Id));
+
+        await operations.UpdateOrder(adminOrder.Id, Request("ADMIN-TIMING", 5));
+        Assert.Equal(10, await inventory.GetCurrentStock(product.Id));
+        await operations.CompleteOrders(new CompleteOrdersRequest([adminOrder.Id], date, [new(product.Id, 2)]));
+        Assert.Equal(8, await inventory.GetCurrentStock(product.Id));
+        Assert.Equal(2, adminOrder.Products.Single().StockCommittedQuantity);
+
+        var repOrder = await operations.CreateOrder(Request("REP-TIMING", 3));
+        Assert.Equal(5, await inventory.GetCurrentStock(product.Id));
+        await operations.CompleteOrders(new CompleteOrdersRequest([repOrder.Id], date, [new(product.Id, 3)]));
+        Assert.Equal(5, await inventory.GetCurrentStock(product.Id));
+
+        await operations.CompleteOrders(new CompleteOrdersRequest([adminOrder.Id], date, [new(product.Id, 3)]));
+        Assert.Equal(2, await inventory.GetCurrentStock(product.Id));
+        await operations.DeleteOrder(adminOrder.Id);
+        Assert.Equal(7, await inventory.GetCurrentStock(product.Id));
+        await Assert.ThrowsAsync<BusinessException>(() => operations.CreateOrder(Request("TOO-MANY", 8), deductStockOnCreate: false));
+    }
+
+    [Fact]
     public async Task Mrp_is_separate_from_unit_price_and_snapshotted_on_new_invoices()
     {
         await using var db=CreateDb();

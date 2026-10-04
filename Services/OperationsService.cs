@@ -62,7 +62,7 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         catch { if (transaction is not null) await transaction.RollbackAsync(); throw; }
     }
 
-    public async Task<Order> CreateOrder(OrderRequest request)
+    public async Task<Order> CreateOrder(OrderRequest request, bool deductStockOnCreate = true)
     {
         if (request.Products.Count == 0) throw new BusinessException("validation_error", "At least one product is required.");
         if (request.DeliveryDate < request.OrderDate) throw new BusinessException("invalid_date", "Delivery date cannot be before order date.");
@@ -86,7 +86,8 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
             var orderNumber=numberedInvoice?await NextInvoiceNumber(request.OrderDate):requestedNumber;
             var order = new Order { CompanyId=shop.CompanyId, ShopId=shop.Id, SalesRepId=rep.Id, OrderNumber=orderNumber, OrderDate=request.OrderDate, DeliveryDate=request.DeliveryDate, DeliveryAddress=request.DeliveryAddress.Trim(), Notes=request.Notes.Trim(), Products=request.Products.Select(x => new OrderProduct { ProductId=x.ProductId, Quantity=x.Quantity, FreeIssueQuantity=x.FreeIssueQuantity, UnitPrice=x.UnitPrice, Mrp=products[x.ProductId].Mrp??products[x.ProductId].SellingPrice, LineSubtotal=decimal.Round(x.Quantity*x.UnitPrice,2) }).ToList() };
             order.OrderTotal = order.Products.Sum(x => x.LineSubtotal);
-            db.Orders.Add(order); inventory.ProcessOrderStock(order);
+            db.Orders.Add(order);
+            if (deductStockOnCreate) inventory.ProcessOrderStock(order);
             await db.SaveChangesAsync();
             if (transaction is not null) await transaction.CommitAsync();
             return order;
@@ -118,7 +119,7 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         foreach (var line in request.Products)
         {
             if (line.Quantity <= 0 || line.FreeIssueQuantity < 0 || line.UnitPrice < 0) throw new BusinessException("validation_error", "Quantities and prices are invalid.");
-            var returnedQuantity = order.Products.Where(x => x.ProductId == line.ProductId).Sum(x => x.Quantity + x.FreeIssueQuantity);
+            var returnedQuantity = order.Products.Where(x => x.ProductId == line.ProductId).Sum(x => x.StockCommittedQuantity);
             if (await inventory.GetCurrentStock(line.ProductId) + returnedQuantity < line.Quantity + line.FreeIssueQuantity) throw new BusinessException("insufficient_stock", $"Insufficient stock for {products[line.ProductId].Name}.", 409);
         }
         var newTotal = request.Products.Sum(x => decimal.Round(x.Quantity * x.UnitPrice, 2));
@@ -126,11 +127,13 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
         await using var transaction = await BeginTransaction();
         try
         {
+            var deductStockOnCreate = order.Products.Any(x => x.StockCommittedQuantity > 0);
             inventory.ReverseOrderStock(order);
             db.OrderProducts.RemoveRange(order.Products);
             order.CompanyId=shop.CompanyId;order.ShopId=shop.Id;order.SalesRepId=rep.Id;order.OrderNumber=request.OrderNumber.Trim();order.OrderDate=request.OrderDate;order.DeliveryDate=request.DeliveryDate;order.DeliveryAddress=request.DeliveryAddress.Trim();order.Notes=request.Notes.Trim();
             order.Products=request.Products.Select(x=>new OrderProduct { ProductId=x.ProductId,Quantity=x.Quantity,FreeIssueQuantity=x.FreeIssueQuantity,UnitPrice=x.UnitPrice,Mrp=products[x.ProductId].Mrp??products[x.ProductId].SellingPrice,LineSubtotal=decimal.Round(x.Quantity*x.UnitPrice,2) }).ToList();
-            order.OrderTotal=newTotal;inventory.ProcessOrderStock(order);
+            db.OrderProducts.AddRange(order.Products);
+            order.OrderTotal=newTotal;if(deductStockOnCreate)inventory.ProcessOrderStock(order);
             await db.SaveChangesAsync();await payments.RecalculateOrderPaymentStatus(order);await db.SaveChangesAsync();
             if(transaction is not null)await transaction.CommitAsync();return order;
         }
@@ -209,6 +212,18 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
             .ToDictionary(x => x.Key, x => x.Sum(line => line.Quantity + line.FreeIssueQuantity - line.DeliveredQuantity));
         if (request.Products.Any(x => !remaining.TryGetValue(x.ProductId, out var available) || x.Quantity > available))
             throw new BusinessException("invalid_delivery", "Delivery quantity exceeds the selected orders' remaining quantity.");
+        foreach (var delivery in request.Products)
+        {
+            var toDeduct = orders.SelectMany(x => x.Products)
+                .Where(x => x.ProductId == delivery.ProductId)
+                .Aggregate((remaining: delivery.Quantity, quantity: 0m), (state, line) =>
+                {
+                    var allocated = Math.Min(state.remaining, line.Quantity + line.FreeIssueQuantity - line.DeliveredQuantity);
+                    return (state.remaining - allocated, state.quantity + Math.Max(0, Math.Min(allocated, line.DeliveredQuantity + allocated - line.StockCommittedQuantity)));
+                }).quantity;
+            if (toDeduct > 0 && !await inventory.CheckAvailableStock(delivery.ProductId, toDeduct))
+                throw new BusinessException("insufficient_stock", "Insufficient stock to complete this delivery.", 409);
+        }
         await using var transaction = await BeginTransaction();
         try
         {
@@ -220,6 +235,8 @@ public sealed class OperationsService(AppDbContext db, InventoryService inventor
                 {
                     var available = line.Quantity + line.FreeIssueQuantity - line.DeliveredQuantity;
                     var allocated = Math.Min(available, quantity);
+                    var uncommitted = Math.Max(0, line.DeliveredQuantity + allocated - line.StockCommittedQuantity);
+                    if (uncommitted > 0) inventory.ProcessOrderDelivery(order, line, uncommitted);
                     line.DeliveredQuantity += allocated;
                     quantity -= allocated;
                     if (quantity == 0) break;

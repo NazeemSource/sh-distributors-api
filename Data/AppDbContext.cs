@@ -113,6 +113,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         modelBuilder.Entity<Order>().HasOne(x => x.SalesRep).WithMany().HasForeignKey(x => x.SalesRepId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<OrderProduct>().HasIndex(x => new { x.OrderId, x.ProductId }).IsUnique();
         modelBuilder.Entity<OrderProduct>().Property(x => x.Mrp).HasPrecision(18, 2);
+        modelBuilder.Entity<OrderProduct>().Property(x => x.StockCommittedQuantity).HasPrecision(18, 2);
         modelBuilder.Entity<OrderProduct>().HasOne(x => x.Order).WithMany(x => x.Products).HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<OrderProduct>().HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<OrderPayment>().HasOne(x => x.Order).WithMany(x => x.Payments).HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);

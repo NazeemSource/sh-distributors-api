@@ -28,15 +28,23 @@ public sealed class InventoryService(AppDbContext db)
         {
             db.InventoryTransactions.Add(Movement(line.ProductId, "ORDER", 0, line.Quantity, "ORDER", order.Id));
             if (line.FreeIssueQuantity > 0) db.InventoryTransactions.Add(Movement(line.ProductId, "FREE_ISSUE", 0, line.FreeIssueQuantity, "ORDER", order.Id));
+            line.StockCommittedQuantity = line.Quantity + line.FreeIssueQuantity;
         }
+    }
+
+    public void ProcessOrderDelivery(Order order, OrderProduct line, decimal quantity)
+    {
+        if (quantity <= 0) return;
+        db.InventoryTransactions.Add(Movement(line.ProductId, "ORDER_DELIVERY", 0, quantity, "ORDER", order.Id));
+        line.StockCommittedQuantity += quantity;
     }
 
     public void ReverseOrderStock(Order order)
     {
         foreach (var line in order.Products)
         {
-            db.InventoryTransactions.Add(Movement(line.ProductId, "ORDER_EDIT_REVERSAL", line.Quantity, 0, "ORDER", order.Id));
-            if (line.FreeIssueQuantity > 0) db.InventoryTransactions.Add(Movement(line.ProductId, "FREE_ISSUE_EDIT_REVERSAL", line.FreeIssueQuantity, 0, "ORDER", order.Id));
+            if (line.StockCommittedQuantity > 0)
+                db.InventoryTransactions.Add(Movement(line.ProductId, "ORDER_EDIT_REVERSAL", line.StockCommittedQuantity, 0, "ORDER", order.Id));
         }
     }
 
