@@ -90,6 +90,30 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
             await AddColumnIfMissingAsync(connection, "BrandingSettings", "Phone", "varchar(40) NOT NULL DEFAULT ''");
             await AddColumnIfMissingAsync(connection, "BrandingSettings", "AuthorizedDistributorOf", "varchar(200) NOT NULL DEFAULT ''");
             await db.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `ProductReturns` (
+                  `Id` char(36) NOT NULL,
+                  `OrderId` char(36) NOT NULL,
+                  `ProductId` char(36) NOT NULL,
+                  `ReturnNumber` varchar(100) NOT NULL,
+                  `ReturnDate` date NOT NULL,
+                  `Quantity` decimal(18,2) NOT NULL,
+                  `UnitPrice` decimal(18,2) NOT NULL,
+                  `Amount` decimal(18,2) NOT NULL,
+                  `Condition` varchar(30) NOT NULL,
+                  `Reason` varchar(500) NOT NULL,
+                  `IsDeleted` tinyint(1) NOT NULL DEFAULT 0,
+                  `DeletedAt` datetime(6) NULL,
+                  `CreatedAt` datetime(6) NOT NULL,
+                  `UpdatedAt` datetime(6) NOT NULL,
+                  CONSTRAINT `PK_ProductReturns` PRIMARY KEY (`Id`),
+                  UNIQUE KEY `IX_ProductReturns_ReturnNumber` (`ReturnNumber`),
+                  KEY `IX_ProductReturns_OrderId_ProductId` (`OrderId`, `ProductId`),
+                  KEY `IX_ProductReturns_ProductId` (`ProductId`),
+                  CONSTRAINT `FK_ProductReturns_Orders_OrderId` FOREIGN KEY (`OrderId`) REFERENCES `Orders` (`Id`) ON DELETE RESTRICT,
+                  CONSTRAINT `FK_ProductReturns_Products_ProductId` FOREIGN KEY (`ProductId`) REFERENCES `Products` (`Id`) ON DELETE RESTRICT
+                ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_general_ci;
+                """);
+            await db.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `StockAdjustmentReasons` (
                   `Id` char(36) NOT NULL,
                   `Name` varchar(80) NOT NULL,
