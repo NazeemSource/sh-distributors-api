@@ -18,9 +18,17 @@ public sealed class BrandingSettingsTests
         var initial = Assert.IsType<OkObjectResult>(await controller.Branding());
         Assert.Contains("SH Distributor", System.Text.Json.JsonSerializer.Serialize(initial.Value));
 
-        var saved = Assert.IsType<OkObjectResult>(await controller.UpdateBranding(new BrandingSettingsRequest("New Distributor", "data:image/png;base64,AA==")));
+        var saved = Assert.IsType<OkObjectResult>(await controller.UpdateBranding(new BrandingSettingsRequest("New Distributor", "data:image/png;base64,AA==", "210303", "202/09 Lower Road", "Trincomalee", "0771234567", "Cargills Food & Beverage Limited")));
         Assert.Contains("New Distributor", System.Text.Json.JsonSerializer.Serialize(saved.Value));
-        Assert.Equal("New Distributor", (await db.BrandingSettings.SingleAsync()).Name);
+        var stored = await db.BrandingSettings.SingleAsync();
+        Assert.Equal("New Distributor", stored.Name);
+        Assert.Equal("210303", stored.Code);
+        Assert.Equal("202/09 Lower Road", stored.Address);
+        Assert.Equal("Trincomalee", stored.City);
+        Assert.Equal("0771234567", stored.Phone);
+        Assert.Equal("Cargills Food & Beverage Limited", stored.AuthorizedDistributorOf);
+        await controller.UpdateBranding(new BrandingSettingsRequest("Renamed Distributor", ""));
+        Assert.Equal("210303", (await db.BrandingSettings.SingleAsync()).Code);
     }
 
     [Fact]

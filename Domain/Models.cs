@@ -30,6 +30,11 @@ public sealed class BrandingSetting : Entity
 {
     public required string Name { get; set; }
     public string LogoDataUrl { get; set; } = "";
+    public string Code { get; set; } = "";
+    public string Address { get; set; } = "";
+    public string City { get; set; } = "";
+    public string Phone { get; set; } = "";
+    public string AuthorizedDistributorOf { get; set; } = "";
 }
 
 public sealed class StockAdjustmentReason : Entity

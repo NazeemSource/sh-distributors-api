@@ -52,6 +52,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         branding.Property(x => x.Id).HasColumnType("char(36)");
         branding.Property(x => x.Name).HasMaxLength(120).IsRequired();
         branding.Property(x => x.LogoDataUrl).HasColumnType("longtext");
+        branding.Property(x => x.Code).HasMaxLength(80).IsRequired();
+        branding.Property(x => x.Address).HasMaxLength(500).IsRequired();
+        branding.Property(x => x.City).HasMaxLength(120).IsRequired();
+        branding.Property(x => x.Phone).HasMaxLength(40).IsRequired();
+        branding.Property(x => x.AuthorizedDistributorOf).HasMaxLength(200).IsRequired();
         branding.HasQueryFilter(x => !x.IsDeleted);
 
         var adjustmentReason = modelBuilder.Entity<StockAdjustmentReason>();

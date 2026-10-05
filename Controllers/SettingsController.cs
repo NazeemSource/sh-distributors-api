@@ -20,7 +20,7 @@ public sealed class SettingsController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Branding()
     {
         var settings = await db.BrandingSettings.AsNoTracking().OrderBy(x => x.CreatedAt).FirstOrDefaultAsync();
-        return Ok(new { name = settings?.Name ?? DefaultName, logoDataUrl = settings?.LogoDataUrl ?? "" });
+        return Ok(new { name = settings?.Name ?? DefaultName, logoDataUrl = settings?.LogoDataUrl ?? "", code = settings?.Code ?? "", address = settings?.Address ?? "", city = settings?.City ?? "", phone = settings?.Phone ?? "", authorizedDistributorOf = settings?.AuthorizedDistributorOf ?? "" });
     }
 
     [Authorize(Roles = "Admin"), HttpPut("branding")]
@@ -43,8 +43,13 @@ public sealed class SettingsController(AppDbContext db) : ControllerBase
             settings.LogoDataUrl = logo;
             settings.UpdatedAt = DateTimeOffset.UtcNow;
         }
+        if (request.Code is not null) settings.Code = request.Code.Trim();
+        if (request.Address is not null) settings.Address = request.Address.Trim();
+        if (request.City is not null) settings.City = request.City.Trim();
+        if (request.Phone is not null) settings.Phone = request.Phone.Trim();
+        if (request.AuthorizedDistributorOf is not null) settings.AuthorizedDistributorOf = request.AuthorizedDistributorOf.Trim();
         await db.SaveChangesAsync();
-        return Ok(new { name = settings.Name, logoDataUrl = settings.LogoDataUrl });
+        return Ok(new { name = settings.Name, logoDataUrl = settings.LogoDataUrl, code = settings.Code, address = settings.Address, city = settings.City, phone = settings.Phone, authorizedDistributorOf = settings.AuthorizedDistributorOf });
     }
 
     private static bool IsSafeLogo(string value) =>
