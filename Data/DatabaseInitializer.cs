@@ -84,6 +84,11 @@ public sealed class DatabaseInitializer(AppDbContext db, IPasswordHasher<User> h
                   CONSTRAINT `PK_BrandingSettings` PRIMARY KEY (`Id`)
                 ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
                 """);
+            await AddColumnIfMissingAsync(connection, "BrandingSettings", "Code", "varchar(80) NOT NULL DEFAULT ''");
+            await AddColumnIfMissingAsync(connection, "BrandingSettings", "Address", "varchar(500) NOT NULL DEFAULT ''");
+            await AddColumnIfMissingAsync(connection, "BrandingSettings", "City", "varchar(120) NOT NULL DEFAULT ''");
+            await AddColumnIfMissingAsync(connection, "BrandingSettings", "Phone", "varchar(40) NOT NULL DEFAULT ''");
+            await AddColumnIfMissingAsync(connection, "BrandingSettings", "AuthorizedDistributorOf", "varchar(200) NOT NULL DEFAULT ''");
             await db.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `StockAdjustmentReasons` (
                   `Id` char(36) NOT NULL,
