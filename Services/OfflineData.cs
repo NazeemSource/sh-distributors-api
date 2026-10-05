@@ -44,6 +44,9 @@ public sealed class OfflineData(AppDbContext db, InventoryService inventory, Pay
         var companies = await db.Companies.AsNoTracking().Where(x => admin || x.Id == companyId).OrderBy(x => x.Name).ToListAsync();
         var shops = await db.Shops.AsNoTracking().Where(x => admin || x.CompanyId == companyId && (x.CreatedByRepId == null || x.CreatedByRepId == userId)).OrderBy(x => x.Name).ToListAsync();
         var products = await db.Products.AsNoTracking().Where(x => admin || x.CompanyId == companyId).OrderBy(x => x.Name).ToListAsync();
+        var productIds = products.Select(x => x.Id).ToList();
+        var stockTotals = await db.InventoryTransactions.AsNoTracking().Where(x => productIds.Contains(x.ProductId)).GroupBy(x => x.ProductId).Select(group => new { ProductId = group.Key, CurrentStock = group.Sum(x => x.QuantityIn - x.QuantityOut) }).ToListAsync();
+        var stockById = stockTotals.ToDictionary(x => x.ProductId, x => x.CurrentStock);
         var orders = await db.Orders.AsNoTracking().Where(x => admin || x.SalesRepId == userId).Include(x => x.Products).Include(x => x.Payments).Include(x => x.Returns).OrderByDescending(x => x.OrderDate).ToListAsync();
         var returns = await db.ProductReturns.AsNoTracking().Include(x => x.Order).Where(x => admin || x.Order!.SalesRepId == userId).OrderByDescending(x => x.ReturnDate).ToListAsync();
         var stockIns = admin ? await db.StockIns.AsNoTracking().Include(x => x.Products).Include(x => x.Payments).OrderByDescending(x => x.StockInDate).ToListAsync() : [];
@@ -55,13 +58,13 @@ public sealed class OfflineData(AppDbContext db, InventoryService inventory, Pay
         object Page<T>(List<T> items) => new { items, total = items.Count, page = 1, totalPages = 1 };
         var reads = new Dictionary<string, object> {
             ["/api/auth/me"] = UserView.From(users.Single(x => x.Id == userId)),
-            ["/api/companies"] = Page(companies), ["/api/shops"] = Page(shops), ["/api/products"] = Page(products),
+            ["/api/companies"] = Page(companies), ["/api/shops"] = Page(shops), ["/api/products"] = Page(products), ["/api/products/stocks"] = stockTotals.Select(x => new { productId = x.ProductId, currentStock = x.CurrentStock }).ToList(),
             ["/api/orders"] = orders, ["/api/returns"] = returns.Select(x => new { x.Id, x.ReturnNumber, x.OrderId, OrderNumber=x.Order!.OrderNumber, x.Order.CompanyId, x.Order.ShopId, x.Order.SalesRepId, x.ProductId, x.ReturnDate, x.Quantity, x.UnitPrice, x.Amount, x.Condition, x.Reason }).ToList(), ["/api/stock-ins"] = stockIns, ["/api/deposit-accounts"] = depositAccounts.Select(x => new { x.Id, x.CompanyId, x.ShopId, x.Date, DueDate = x.DueDate ?? x.Date, x.Type, x.Account, x.InvoiceNumber, x.IsCreditAccount, x.Total, Paid = x.Payments.Sum(p => p.Amount), Due = x.Total - x.Payments.Sum(p => p.Amount), PaymentMethod = x.Payments.OrderBy(p => p.PaymentDate).LastOrDefault()?.Method ?? "", Status = x.Total == x.Payments.Sum(p => p.Amount) ? "Paid" : x.Payments.Sum(p => p.Amount) > 0 ? "Partially paid" : "Pending", Payments = x.Payments.Select(p => new { p.Id, p.PaymentDate, p.Amount, p.Method, p.Reference }).ToList() }).ToList(), ["/api/cheques"] = Page(cheques)
         };
         if (admin) reads["/api/settings/adjustment-reasons"] = adjustmentReasons;
         if (admin) reads["/api/users"] = users.Select(UserView.From).ToList();
         foreach (var p in products) {
-            reads[$"/api/products/{p.Id}/stock"] = new { productId = p.Id, currentStock = await inventory.GetCurrentStock(p.Id) };
+            reads[$"/api/products/{p.Id}/stock"] = new { productId = p.Id, currentStock = stockById.GetValueOrDefault(p.Id) };
             reads[$"/api/products/{p.Id}/stock-history"] = await inventory.GetStockHistory(p.Id);
         }
         foreach (var s in shops) reads[$"/api/shops/{s.Id}/outstanding"] = new { shopId = s.Id, outstanding = await payments.GetShopOutstanding(s.Id), orders = await payments.GetShopOutstandingOrders(s.Id) };

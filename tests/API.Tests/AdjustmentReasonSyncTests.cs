@@ -46,6 +46,7 @@ public sealed class AdjustmentReasonSyncTests
             var snapshot = (JsonElement)await new OfflineData(db, new InventoryService(db), new PaymentService(db))
                 .Snapshot(new System.Security.Claims.ClaimsPrincipal(identity));
             Assert.Equal("Opening | stock", snapshot.GetProperty("reads").GetProperty("/api/settings/adjustment-reasons")[0].GetString());
+            Assert.Equal(4, snapshot.GetProperty("reads").GetProperty("/api/products/stocks")[0].GetProperty("currentStock").GetDecimal());
         }
     }
 

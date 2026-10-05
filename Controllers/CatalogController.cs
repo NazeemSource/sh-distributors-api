@@ -40,6 +40,8 @@ public sealed class CatalogController(AppDbContext db, OperationsService operati
 
     [HttpGet("products")]
     public async Task<object> Products([FromQuery]Guid? companyId,[FromQuery]string? search="",[FromQuery]bool? active=null,[FromQuery]int page=1,[FromQuery]int pageSize=25){var q=db.Products.AsNoTracking().AsQueryable();if(!User.IsAdmin())q=q.Where(x=>x.CompanyId==User.CompanyId());else if(companyId.HasValue)q=q.Where(x=>x.CompanyId==companyId);if(active.HasValue)q=q.Where(x=>x.Active==active);if(!string.IsNullOrWhiteSpace(search))q=q.Where(x=>x.Name.Contains(search)||x.Sku.Contains(search)||x.Barcode.Contains(search));return await Page(q.OrderBy(x=>x.Name),page,pageSize);}
+    [HttpGet("products/stocks")]
+    public async Task<object> ProductStocks(){var q=db.InventoryTransactions.AsNoTracking().AsQueryable();if(!User.IsAdmin())q=q.Where(x=>db.Products.Any(p=>p.Id==x.ProductId&&p.CompanyId==User.CompanyId()));return await q.GroupBy(x=>x.ProductId).Select(group=>new{productId=group.Key,currentStock=group.Sum(x=>x.QuantityIn-x.QuantityOut)}).ToListAsync();}
     [HttpPost("products"),Authorize(Roles="Admin")]
     public async Task<IActionResult> CreateProduct(ProductRequest r){var x=await operations.CreateProduct(r);return Created($"/api/products/{x.Id}",x);}
     [HttpPut("products/{id:guid}"),Authorize(Roles="Admin")]
